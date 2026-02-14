@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PrismAnalysis",
+  "description": "Canonical schema for Prism analysis request and response. Extension and backend must align so UI and API stay in sync. Owner: Product/Demo Lead (schema design); Backend Lead and Extension Lead (consumption).",
+  "type": "object",
+  "properties": {
+    "request": {
+      "description": "Payload sent from extension to backend: extracted content and metadata.",
+      "type": "object",
+      "properties": {
+        "url": { "type": "string", "description": "Page URL." },
+        "title": { "type": "string", "description": "Page title." },
+        "text": { "type": "string", "description": "Sanitized main content text." }
+      },
+      "required": ["url", "title", "text"]
+    },
+    "response": {
+      "description": "Payload returned by backend to extension: perspectives, optional bias, optional reflection.",
+      "type": "object",
+      "properties": {
+        "perspectives": {
+          "type": "array",
+          "description": "Structured perspective expansions (viewpoints/framings).",
+          "items": {
+            "type": "object",
+            "properties": {
+              "label": { "type": "string" },
+              "body": { "type": "string" }
+            },
+            "required": ["label", "body"]
+          }
+        },
+        "bias": {
+          "type": "object",
+          "description": "Bias indicators or scores; shape may vary by experiment."
+        },
+        "reflection": {
+          "type": "string",
+          "description": "Optional reflection prompt or question for the user."
+        }
+      },
+      "required": ["perspectives"]
+    }
+  }
+}
