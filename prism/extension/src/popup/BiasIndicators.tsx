@@ -1,36 +1,43 @@
 /**
- * =============================================================================
- * FILE PURPOSE
- * =============================================================================
- *
- * This file renders bias indicators derived from the analysis: signals such as
- * framing, language bias, or cognitive bias scores. It gives users a quick
- * visual summary of how the content might be slanted before they read
- * the full perspective expansions.
- *
- * =============================================================================
- * OWNER ROLE
- * =============================================================================
- *
- * UX/Interaction Lead
- *
- * =============================================================================
- * RESPONSIBILITIES
- * =============================================================================
- *
- * - Accept bias-related fields from the analysis result (schema-defined).
- * - Display indicators (e.g. tags, badges, or a small list) without overwhelming
- *   the popup; keep copy short and scannable.
- * - Handle missing or empty bias data gracefully (hide or show "No indicators").
- * - Purely presentational; no API or store writes.
- *
- * =============================================================================
- * INTEGRATION NOTES
- * =============================================================================
- *
- * - Data comes from Popup/analysisStore; structure aligns with backend
- *   logic/biasDetection.ts and analysisSchema (bias or indicators section).
- * - Rendered alongside PerspectiveMatrix in Popup.tsx.
- *
- * =============================================================================
+ * Bias indicators: framing / cognitive bias signals from analysis.
+ * Owner: UX/Interaction Lead.
  */
+
+import React from 'react';
+import type { AnalysisResult } from '../types/analysis';
+
+interface BiasIndicatorsProps {
+  bias: AnalysisResult['bias'];
+}
+
+function getIndicators(bias: AnalysisResult['bias']): string[] {
+  if (!bias) return [];
+  if (Array.isArray((bias as { indicators?: string[] }).indicators)) {
+    return (bias as { indicators: string[] }).indicators;
+  }
+  if (typeof bias === 'object' && bias !== null) {
+    const arr = (bias as Record<string, unknown>)['indicators'];
+    if (Array.isArray(arr)) return arr as string[];
+  }
+  return [];
+}
+
+export function BiasIndicators({ bias }: BiasIndicatorsProps) {
+  const indicators = getIndicators(bias);
+  if (indicators.length === 0) return null;
+
+  return (
+    <section className="prism-section" aria-labelledby="prism-bias-heading">
+      <h2 id="prism-bias-heading" className="prism-heading prism-heading--sm">
+        Framing notes
+      </h2>
+      <div className="prism-badges">
+        {indicators.map((label, i) => (
+          <span key={i} className="prism-badge">
+            {label}
+          </span>
+        ))}
+      </div>
+    </section>
+  );
+}

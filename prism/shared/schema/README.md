@@ -12,7 +12,10 @@ Single source of truth for the analysis request and response shape. Both extensi
 ## analysisSchema.json
 
 - Describes **request**: url, title, text (and any optional flags).
-- Describes **response**: perspectives (array of { label, body }), optional bias, optional reflection.
+- Describes **response**:
+  - **perspectives** (required): array of { label, body } with optional matrix columns: coreFraming, stakeholderImpact, assumption.
+  - **bias** (optional): object; preferred shape is `{ indicators: string[] }` for framing notes (e.g. "Emotional language", "Authority emphasis").
+  - **reflection** (optional): string prompt or question for the user.
 - Experiments may extend with additional optional fields; required fields should remain stable for backward compatibility.
 
 ## Integration

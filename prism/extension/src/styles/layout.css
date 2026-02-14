@@ -1,38 +1,264 @@
 /**
- * =============================================================================
- * FILE PURPOSE
- * =============================================================================
- *
- * This file defines layout and base styling for the Prism popup: dimensions,
- * spacing, typography, and any shared theme variables. It keeps the popup
- * consistent and readable within the narrow extension window.
- *
- * =============================================================================
- * OWNER ROLE
- * =============================================================================
- *
- * UX/Interaction Lead
- *
- * =============================================================================
- * RESPONSIBILITIES
- * =============================================================================
- *
- * - Popup container: min/max width and height suitable for extension popup.
- * - Typography: font family, sizes, line height for headings and body.
- * - Spacing: padding/margin scale for popup, cards, and lists.
- * - Optional: CSS variables for colors (background, text, borders, accents)
- *   so experiments can theme without changing structure.
- * - No component-specific overrides that belong in component files; this is
- *   global layout and tokens only.
- *
- * =============================================================================
- * INTEGRATION NOTES
- * =============================================================================
- *
- * - Loaded from the popup entry (e.g. Popup.tsx or popup.html). All popup
- *   components (Popup, PerspectiveMatrix, BiasIndicators, ReflectionPrompt,
- *   LoadingState) inherit this layout. Experiment branches may add or override
- *   styles in separate files.
- *
- * =============================================================================
+ * Prism popup — layout and base theme.
+ * Owner: UX/Interaction Lead.
  */
+
+:root {
+  /* Dimensions */
+  --prism-popup-width: 380px;
+  --prism-popup-min-height: 320px;
+  --prism-popup-max-height: 560px;
+
+  /* Spacing scale */
+  --prism-space-xs: 4px;
+  --prism-space-sm: 8px;
+  --prism-space-md: 12px;
+  --prism-space-lg: 16px;
+  --prism-space-xl: 20px;
+
+  /* Typography */
+  --prism-font-sans: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+  --prism-font-mono: ui-monospace, monospace;
+  --prism-text-xs: 11px;
+  --prism-text-sm: 12px;
+  --prism-text-base: 13px;
+  --prism-text-lg: 15px;
+  --prism-text-xl: 17px;
+  --prism-leading-tight: 1.25;
+  --prism-leading-normal: 1.45;
+
+  /* Colors — neutral, readable in extension popup */
+  --prism-bg: #fafafa;
+  --prism-bg-elevated: #ffffff;
+  --prism-border: #e5e5e5;
+  --prism-text: #1a1a1a;
+  --prism-text-muted: #6b6b6b;
+  --prism-accent: #2563eb;
+  --prism-accent-hover: #1d4ed8;
+  --prism-error: #b91c1c;
+  --prism-success: #15803d;
+}
+
+/* Container */
+.prism-popup {
+  width: var(--prism-popup-width);
+  min-height: var(--prism-popup-min-height);
+  max-height: var(--prism-popup-max-height);
+  overflow: auto;
+  font-family: var(--prism-font-sans);
+  font-size: var(--prism-text-base);
+  line-height: var(--prism-leading-normal);
+  color: var(--prism-text);
+  background: var(--prism-bg);
+  box-sizing: border-box;
+}
+
+.prism-popup *,
+.prism-popup *::before,
+.prism-popup *::after {
+  box-sizing: border-box;
+}
+
+/* Headings */
+.prism-heading {
+  font-size: var(--prism-text-lg);
+  font-weight: 600;
+  line-height: var(--prism-leading-tight);
+  margin: 0 0 var(--prism-space-sm) 0;
+}
+
+.prism-heading--sm {
+  font-size: var(--prism-text-base);
+  font-weight: 600;
+}
+
+/* Sections */
+.prism-section {
+  margin-bottom: var(--prism-space-lg);
+}
+
+.prism-section:last-child {
+  margin-bottom: 0;
+}
+
+/* Cards / blocks */
+.prism-card {
+  background: var(--prism-bg-elevated);
+  border: 1px solid var(--prism-border);
+  border-radius: 6px;
+  padding: var(--prism-space-md);
+  margin-bottom: var(--prism-space-sm);
+}
+
+.prism-card:last-child {
+  margin-bottom: 0;
+}
+
+/* Lists */
+.prism-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.prism-list li {
+  padding: var(--prism-space-xs) 0;
+  border-bottom: 1px solid var(--prism-border);
+}
+
+.prism-list li:last-child {
+  border-bottom: none;
+}
+
+/* Buttons */
+.prism-btn {
+  font-family: inherit;
+  font-size: var(--prism-text-sm);
+  font-weight: 500;
+  line-height: 1.3;
+  padding: var(--prism-space-sm) var(--prism-space-md);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background: var(--prism-accent);
+  color: #fff;
+}
+
+.prism-btn:hover {
+  background: var(--prism-accent-hover);
+}
+
+.prism-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.prism-btn--secondary {
+  background: var(--prism-bg-elevated);
+  color: var(--prism-text);
+  border: 1px solid var(--prism-border);
+}
+
+.prism-btn--secondary:hover {
+  background: var(--prism-border);
+}
+
+/* Utility */
+.prism-text-muted {
+  color: var(--prism-text-muted);
+  font-size: var(--prism-text-sm);
+}
+
+.prism-error {
+  color: var(--prism-error);
+  font-size: var(--prism-text-sm);
+}
+
+.prism-pad {
+  padding: var(--prism-space-lg);
+}
+
+.prism-scroll {
+  overflow-y: auto;
+  max-height: 100%;
+}
+
+/* Focus for accessibility */
+.prism-btn:focus-visible,
+.prism-popup [tabindex]:focus-visible {
+  outline: 2px solid var(--prism-accent);
+  outline-offset: 2px;
+}
+
+/* Loading */
+.prism-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--prism-space-md);
+  min-height: 120px;
+}
+
+.prism-loading__spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--prism-border);
+  border-top-color: var(--prism-accent);
+  border-radius: 50%;
+  animation: prism-spin 0.7s linear infinite;
+}
+
+@keyframes prism-spin {
+  to { transform: rotate(360deg); }
+}
+
+.prism-loading__message {
+  margin: 0;
+  font-size: var(--prism-text-sm);
+}
+
+/* Matrix */
+.prism-matrix__label {
+  font-weight: 600;
+  font-size: var(--prism-text-sm);
+  margin-bottom: var(--prism-space-xs);
+}
+
+.prism-matrix__row {
+  font-size: var(--prism-text-sm);
+  margin-bottom: var(--prism-space-xs);
+}
+
+.prism-matrix__body {
+  margin: var(--prism-space-sm) 0 0 0;
+  font-size: var(--prism-text-sm);
+  line-height: var(--prism-leading-normal);
+}
+
+/* Badges (bias) */
+.prism-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--prism-space-xs);
+}
+
+.prism-badge {
+  display: inline-block;
+  padding: var(--prism-space-xs) var(--prism-space-sm);
+  font-size: var(--prism-text-xs);
+  background: var(--prism-bg-elevated);
+  border: 1px solid var(--prism-border);
+  border-radius: 4px;
+  color: var(--prism-text-muted);
+}
+
+/* Reflection */
+.prism-reflection__prompt {
+  margin: 0 0 var(--prism-space-md) 0;
+  font-size: var(--prism-text-sm);
+}
+
+.prism-reflection__input-wrap {
+  margin-bottom: var(--prism-space-md);
+}
+
+.prism-reflection__input-wrap label {
+  display: block;
+  margin-bottom: var(--prism-space-xs);
+}
+
+.prism-reflection__input {
+  width: 100%;
+  font-family: inherit;
+  font-size: var(--prism-text-sm);
+  padding: var(--prism-space-sm);
+  border: 1px solid var(--prism-border);
+  border-radius: 4px;
+  resize: vertical;
+  min-height: 52px;
+}
+
+.prism-reflection__btn {
+  margin-top: var(--prism-space-sm);
+}
