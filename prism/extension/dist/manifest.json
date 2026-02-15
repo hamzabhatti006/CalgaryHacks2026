@@ -23,7 +23,7 @@
   "content_scripts": [
     {
       "js": [
-        "assets/index.ts-BqPq_4DP.js"
+        "assets/index.ts-lcgKXULS.js"
       ],
       "matches": [
         "http://*/*",
@@ -39,7 +39,9 @@
       ],
       "resources": [
         "popup.html",
-        "assets/index.ts-BqPq_4DP.js"
+        "icons/icon48.png",
+        "icons/logo.png",
+        "assets/index.ts-lcgKXULS.js"
       ],
       "use_dynamic_url": false
     }
