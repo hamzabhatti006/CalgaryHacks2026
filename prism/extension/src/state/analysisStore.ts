@@ -69,9 +69,43 @@ let state: AnalysisState = {
 };
 
 const listeners = new Set<Listener>();
+const STORAGE_KEY = 'prism_last_analysis';
 
 function emit(): void {
   listeners.forEach((fn) => fn(state));
+}
+
+async function persist(): Promise<void> {
+  if (state.status !== 'success' || !state.result) return;
+  try {
+    await chrome.storage.session.set({
+      [STORAGE_KEY]: {
+        result: state.result,
+        requestMeta: state.requestMeta,
+        timestamp: Date.now(),
+      },
+    });
+  } catch {
+    /* ignore */
+  }
+}
+
+export async function initFromStorage(): Promise<void> {
+  try {
+    const stored = await chrome.storage.session.get(STORAGE_KEY);
+    const raw = stored[STORAGE_KEY];
+    if (raw && raw.result?.perspectives?.length) {
+      state = {
+        status: 'success',
+        result: raw.result,
+        error: null,
+        requestMeta: raw.requestMeta ?? null,
+      };
+      emit();
+    }
+  } catch {
+    /* ignore */
+  }
 }
 
 export function getState(): AnalysisState {
@@ -96,6 +130,7 @@ export function setSuccess(result: AnalysisResult, meta?: { url: string; title: 
     requestMeta: meta ?? state.requestMeta,
   };
   emit();
+  void persist();
 }
 
 export function setError(message: string): void {

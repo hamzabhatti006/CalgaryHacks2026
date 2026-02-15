@@ -52,16 +52,50 @@ export interface ExtractResult {
   text: string;
 }
 
-/**
- * Extract page content and metadata for analysis.
- * Returns a payload matching the schema request shape.
- */
+/** X/Twitter tweet text selector */
+const X_TWEET_SELECTOR = '[data-testid="tweetText"]';
+const X_TWEET_ARTICLE = 'article[data-testid="tweet"]';
+
+/** Reddit post content selectors */
+const REDDIT_SELECTORS = ['[data-testid="post-content"]', '[slot="full-post-content"]', '.Post .UserPost', '[data-click-id="text"]'];
+
+function extractFromX(doc: Document): string {
+  const host = doc.defaultView?.location?.hostname ?? window.location.hostname;
+  if (!/^(x\.com|twitter\.com)$/.test(host)) return '';
+
+  const tweetText = doc.querySelector(X_TWEET_SELECTOR);
+  if (tweetText) return getVisibleText(tweetText, MAX_TEXT_LENGTH);
+
+  const article = doc.querySelector(X_TWEET_ARTICLE);
+  if (article) return getVisibleText(article, MAX_TEXT_LENGTH);
+
+  return '';
+}
+
+function extractFromReddit(doc: Document): string {
+  const host = doc.defaultView?.location?.hostname ?? window.location.hostname;
+  if (!/^((?:www\.)?reddit\.com)$/.test(host)) return '';
+
+  for (const sel of REDDIT_SELECTORS) {
+    const el = doc.querySelector(sel);
+    if (el) {
+      const t = getVisibleText(el, MAX_TEXT_LENGTH);
+      if (t.length >= MIN_TEXT_LENGTH) return t;
+    }
+  }
+  return '';
+}
+
 export function extractContent(doc: Document = document): ExtractResult {
   const url = doc.defaultView?.location?.href ?? window.location.href;
   const title = doc.title || 'Untitled';
 
-  const main = findMainContent(doc);
-  let text = main ? getVisibleText(main, MAX_TEXT_LENGTH) : '';
+  let text = extractFromX(doc) || extractFromReddit(doc);
+
+  if (text.length < MIN_TEXT_LENGTH) {
+    const main = findMainContent(doc);
+    text = main ? getVisibleText(main, MAX_TEXT_LENGTH) : '';
+  }
 
   if (text.length < MIN_TEXT_LENGTH) {
     const body = doc.body;

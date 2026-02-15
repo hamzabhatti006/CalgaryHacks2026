@@ -11,12 +11,16 @@ import {
   setLoading,
   setSuccess,
   setError,
+  initFromStorage,
 } from '../state/analysisStore';
 import { analyze } from '../api/analyzeClient';
 
 function PopupApp() {
   const [state, setState] = React.useState(getState);
 
+  React.useEffect(() => {
+    initFromStorage();
+  }, []);
   React.useEffect(() => subscribe(setState), []);
 
   const handleAnalyze = async () => {
@@ -26,19 +30,37 @@ function PopupApp() {
       return;
     }
 
+    const tabUrl = tab.url ?? '';
+    if (!tabUrl.startsWith('http://') && !tabUrl.startsWith('https://')) {
+      setError('Can\'t analyze this page. Open a normal website (not New Tab / chrome://).');
+      return;
+    }
+
     setLoading();
     try {
-      const res = await new Promise<{ ok: boolean; data?: { url: string; title: string; text: string }; error?: string }>(
-        (resolve) => {
-          chrome.tabs.sendMessage(tab.id!, { type: 'EXTRACT' }, (r) => {
-            if (chrome.runtime.lastError) {
-              resolve({ ok: false, error: chrome.runtime.lastError.message });
-            } else {
-              resolve(r ?? { ok: false, error: 'No response' });
-            }
-          });
+      const res = await new Promise<{
+      ok: boolean;
+      data?: { url: string; title: string; text: string };
+      error?: string;
+    }>((resolve) => {
+      chrome.tabs.sendMessage(tab.id!, { type: 'EXTRACT' }, (r) => {
+        const lastErr = chrome.runtime.lastError?.message;
+
+        if (lastErr) {
+          if (lastErr.includes('Receiving end does not exist')) {
+            resolve({
+              ok: false,
+              error: 'Can’t analyze this page. Open a normal website (not New Tab / chrome://).',
+            });
+          } else {
+            resolve({ ok: false, error: lastErr });
+          }
+          return;
         }
-      );
+
+        resolve(r ?? { ok: false, error: 'No response from content script' });
+      });
+    });
 
       if (!res.ok || !res.data) {
         setError(res.error ?? 'Extraction failed');

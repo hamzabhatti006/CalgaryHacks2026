@@ -61,12 +61,15 @@ export function findMainContent(root: Document | Element = document): Element | 
 
 /**
  * Extract visible text from an element, excluding script, style, nav, etc.
- * Uses a simple walk to skip non-content nodes.
+ * Uses a simple walk to skip non-content nodes. Stops early when maxLength is reached.
  */
 export function getVisibleText(el: Element, maxLength = 0): string {
   const parts: string[] = [];
+  const limit = maxLength > 0 ? maxLength + 256 : 0;
 
   function walk(node: Node): void {
+    if (limit > 0 && parts.join(' ').length >= limit) return;
+
     if (node.nodeType === Node.TEXT_NODE) {
       const t = node.textContent?.trim();
       if (t) parts.push(t);
@@ -79,6 +82,7 @@ export function getVisibleText(el: Element, maxLength = 0): string {
 
     for (let i = 0; i < node.childNodes.length; i++) {
       walk(node.childNodes[i]);
+      if (limit > 0 && parts.join(' ').length >= limit) return;
     }
     if (['p', 'br', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'blockquote'].includes(tag || '')) {
       parts.push('\n');

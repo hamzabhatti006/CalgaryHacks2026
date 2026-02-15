@@ -40,8 +40,9 @@
 import type { ExtractResult } from '../content/extractContent';
 import type { AnalysisResult } from '../state/analysisStore';
 
-/** Default backend base URL (dev); override via storage or env in build */
-const DEFAULT_BASE_URL = 'http://localhost:3000';
+/** Backend base URL; override via VITE_PRISM_API_BASE_URL env */
+const DEFAULT_BASE_URL =
+  (import.meta?.env?.VITE_PRISM_API_BASE_URL as string | undefined) || 'http://localhost:3000';
 
 /** Timeout in ms; target &lt;3s per concept doc */
 const TIMEOUT_MS = 10000;
@@ -94,6 +95,9 @@ export async function analyze(
     clearTimeout(id);
     if (err instanceof Error) {
       if (err.name === 'AbortError') throw new Error('Request timed out');
+      if (err.name === 'TypeError' && (err.message === 'Failed to fetch' || err.message.includes('network'))) {
+        throw new Error('Backend not reachable. Start backend or set VITE_PRISM_API_BASE_URL.');
+      }
       throw err;
     }
     throw new Error('Analysis request failed');
