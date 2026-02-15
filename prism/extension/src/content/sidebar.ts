@@ -7,6 +7,14 @@ const TAB_WIDTH = 60;
 const TAB_HEIGHT = 60;
 const PANEL_WIDTH = 420;
 
+function shouldSkipSidebar(location: Location): boolean {
+  const hostname = location.hostname.toLowerCase();
+  const pathname = location.pathname.toLowerCase();
+  const isGoogleDomain = hostname === "google" || hostname.startsWith("google.") || hostname.includes(".google.");
+  const isBlockedPath = pathname === "/" || pathname === "/search" || pathname === "/webhp";
+  return isGoogleDomain && isBlockedPath;
+}
+
 function createSidebar(): void {
   if (document.getElementById("prism-floating-root")) return;
 
@@ -138,8 +146,13 @@ function createSidebar(): void {
   document.body.appendChild(root);
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", createSidebar);
-} else {
+function mountSidebarIfAllowed(): void {
+  if (shouldSkipSidebar(window.location)) return;
   createSidebar();
+}
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", mountSidebarIfAllowed);
+} else {
+  mountSidebarIfAllowed();
 }
