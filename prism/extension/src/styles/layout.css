@@ -1,0 +1,38 @@
+/**
+ * =============================================================================
+ * FILE PURPOSE
+ * =============================================================================
+ *
+ * This file defines layout and base styling for the Prism popup: dimensions,
+ * spacing, typography, and any shared theme variables. It keeps the popup
+ * consistent and readable within the narrow extension window.
+ *
+ * =============================================================================
+ * OWNER ROLE
+ * =============================================================================
+ *
+ * UX/Interaction Lead
+ *
+ * =============================================================================
+ * RESPONSIBILITIES
+ * =============================================================================
+ *
+ * - Popup container: min/max width and height suitable for extension popup.
+ * - Typography: font family, sizes, line height for headings and body.
+ * - Spacing: padding/margin scale for popup, cards, and lists.
+ * - Optional: CSS variables for colors (background, text, borders, accents)
+ *   so experiments can theme without changing structure.
+ * - No component-specific overrides that belong in component files; this is
+ *   global layout and tokens only.
+ *
+ * =============================================================================
+ * INTEGRATION NOTES
+ * =============================================================================
+ *
+ * - Loaded from the popup entry (e.g. Popup.tsx or popup.html). All popup
+ *   components (Popup, PerspectiveMatrix, BiasIndicators, ReflectionPrompt,
+ *   LoadingState) inherit this layout. Experiment branches may add or override
+ *   styles in separate files.
+ *
+ * =============================================================================
+ */
