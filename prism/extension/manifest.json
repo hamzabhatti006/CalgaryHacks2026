@@ -4,8 +4,15 @@
   "version": "0.1.0",
   "description": "Analyzes content and generates structured perspective expansions.",
   "permissions": ["activeTab", "storage"],
-  "host_permissions": ["<all_urls>"],
-  "action": { "default_popup": "popup.html", "default_title": "Prism" },
-  "content_scripts": [],
-  "background": {}
+  "host_permissions": ["http://*/*", "https://*/*"],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Prism"
+  },
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["src/content/index.ts"]
+    }
+  ]
 }

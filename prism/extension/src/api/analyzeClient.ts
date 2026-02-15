@@ -16,7 +16,6 @@
  *
  * =============================================================================
  * RESPONSIBILITIES
- * =============================================================================
  *
  * - Expose a single function (e.g. analyze(contentPayload, options)) that
  *   POSTs to the backend analyze route (see backend routes/analyzeRoute.ts).
@@ -28,7 +27,6 @@
  *
  * =============================================================================
  * INTEGRATION NOTES
- * =============================================================================
  *
  * - Called from Popup (or background) after content is extracted via
  *   content/extractContent.ts. Request payload shape must align with
@@ -38,3 +36,70 @@
  *
  * =============================================================================
  */
+
+import type { ExtractResult } from '../content/extractContent';
+import type { AnalysisResult } from '../state/analysisStore';
+
+/** Backend base URL; override via VITE_PRISM_API_BASE_URL env */
+const DEFAULT_BASE_URL =
+  (import.meta?.env?.VITE_PRISM_API_BASE_URL as string | undefined) || 'http://localhost:3000';
+
+/** Timeout in ms; target &lt;3s per concept doc */
+const TIMEOUT_MS = 10000;
+
+export interface AnalyzeOptions {
+  baseUrl?: string;
+}
+
+/**
+ * POST extracted content to the backend analyze endpoint.
+ * Returns schema-shaped AnalysisResult or throws with a clear error message.
+ */
+export async function analyze(
+  payload: ExtractResult,
+  options: AnalyzeOptions = {}
+): Promise<AnalysisResult> {
+  const baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
+  const url = `${baseUrl.replace(/\/$/, '')}/api/analyze`;
+
+  const controller = new AbortController();
+  const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+
+    clearTimeout(id);
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      const msg = data?.message || data?.error || `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+
+    if (!Array.isArray(data?.perspectives)) {
+      throw new Error('Invalid response: missing perspectives');
+    }
+
+    return {
+      perspectives: data.perspectives,
+      bias: data.bias,
+      reflection: data.reflection,
+    } as AnalysisResult;
+  } catch (err) {
+    clearTimeout(id);
+    if (err instanceof Error) {
+      if (err.name === 'AbortError') throw new Error('Request timed out');
+      if (err.name === 'TypeError' && (err.message === 'Failed to fetch' || err.message.includes('network'))) {
+        throw new Error('Backend not reachable. Start backend or set VITE_PRISM_API_BASE_URL.');
+      }
+      throw err;
+    }
+    throw new Error('Analysis request failed');
+  }
+}
