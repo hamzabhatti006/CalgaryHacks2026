@@ -129,3 +129,110 @@ Generate the descriptions."""
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": user_prompt},
     ]
+
+
+# ---------------------------------------------------------------------------
+# SINGLE-STEP: GENERATE PERSPECTIVES (Headers + Descriptions Together)
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# SINGLE-STEP: GENERATE PERSPECTIVES (HEADERS + DESCRIPTIONS TOGETHER)
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
+# SINGLE-STEP: GENERATE HIGH-QUALITY PERSPECTIVES
+# ---------------------------------------------------------------------------
+
+def build_perspectives_messages(title: str, url: str, text: str) -> List[Dict[str, str]]:
+    """
+    Single LLM call: generate 4–5 high-quality, content-specific perspective
+    headers AND their descriptions together.
+
+    Combines the strict header-generation rules and the strict interpretation
+    rules from the previous two-step flow.
+    """
+
+    system_prompt = """You are a perspective-expansion analyst.
+
+Your job:
+1) Identify the most relevant viewpoints for understanding a given piece of content.
+2) Write a clear, interpretive description of how each viewpoint applies to the content.
+
+------------------------------------------------------------------
+HEADER REQUIREMENTS
+------------------------------------------------------------------
+
+CRITICAL - FORBIDDEN LABELS (never use these):
+- "Market-Oriented Perspective"
+- "Social Equity Perspective"
+- "Institutional Stability Perspective"
+- "Civil Liberties Perspective"
+- "Economic Perspective" (too generic)
+- "Cultural Perspective" (too generic)
+
+You MUST create NEW, content-specific headers.
+
+Examples of strong headers:
+- "How a hardworking immigrant would feel based on the statement"
+- "Economic perspective of a poor person"
+- "View of a frontline worker in this industry"
+- "How affected communities would experience this"
+- "Interpretation from a religious minority viewpoint"
+
+Prioritize:
+- Socioeconomic lenses
+- Affected communities
+- Lived experiences
+- Emotional impact
+- Grassroots vs institutional views
+
+Each header must reference a concrete person, group, or clearly defined lens.
+
+------------------------------------------------------------------
+DESCRIPTION REQUIREMENTS
+------------------------------------------------------------------
+
+For each header:
+
+- Interpret the content through that lens.
+- Describe how someone with that viewpoint would understand or react to the content.
+- Do NOT add statistics, cite sources, or introduce new facts.
+- Do NOT stereotype or moralize.
+- Be empathetic and nuanced.
+- Each body must be 2–4 sentences.
+- Each perspective must be distinct and non-overlapping.
+
+------------------------------------------------------------------
+
+Output valid JSON only. No markdown. No commentary.
+"""
+
+    user_prompt = f"""Analyze this content and generate 4–5 high-quality perspectives.
+
+Return JSON in this exact structure:
+
+{{
+  "perspectives": [
+    {{
+      "label": "Content-specific header (concrete stakeholder or lens)",
+      "body": "2–4 sentence interpretation through this lens"
+    }}
+  ]
+}}
+
+Content:
+
+Title: {title}
+URL: {url}
+
+\"\"\"
+{text}
+\"\"\"
+
+Generate the perspectives now.
+"""
+
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
+    ]

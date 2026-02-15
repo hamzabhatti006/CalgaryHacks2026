@@ -42,40 +42,18 @@
 #
 # =============================================================================
 
+import asyncio
 
 from fastapi import APIRouter, HTTPException
 
 from src.utils.textSanitizer import sanitize_text
 from src.utils.truncation import truncate_text
-from src.services.promptBuilder import build_headers_messages, build_descriptions_messages
-from src.services.responseValidator import (
-    validate_headers,
-    validate_perspectives,
-    ValidationError,
-)
+from src.services.promptBuilder import build_perspectives_messages
+from src.services.responseValidator import validate, ValidationError
 from src.services.llmService import complete, LLMServiceError
 from src.logic.biasDetection import detect_bias
 
 router = APIRouter(prefix="/api/analyze", tags=["analyze"])
-
-
-def _run_two_step_analysis(clean_title: str, url: str, final_text: str):
-    """Step 1: Get perspective headers. Step 2: Get descriptions for each."""
-    # Step 1: Generate content-specific perspective headers
-    headers_messages = build_headers_messages(
-        title=clean_title, url=url, text=final_text
-    )
-    raw_headers = complete(headers_messages)
-    headers = validate_headers(raw_headers)
-
-    # Step 2: Generate description for each header
-    desc_messages = build_descriptions_messages(
-        title=clean_title, url=url, text=final_text, headers=headers
-    )
-    raw_descriptions = complete(desc_messages)
-    result = validate_perspectives(raw_descriptions, expected_labels=headers)
-
-    return result["perspectives"]
 
 
 @router.post("/")
@@ -91,30 +69,60 @@ async def analyze_content(payload: dict):
     url = payload["url"]
 
     try:
-        perspectives = _run_two_step_analysis(clean_title, url, final_text)
+       # Build single-step prompt
+        messages = build_perspectives_messages(
+            title=clean_title,
+            url=url,
+            text=final_text
+        )
 
-        bias = detect_bias(clean_title, url, final_text)
+        # Run perspectives + bias in parallel
+        perspectives_task = asyncio.to_thread(
+            lambda: validate(complete(messages))
+        )
 
-        analysis = {
-        "perspectives": perspectives,
-        "bias": bias
+        bias_task = asyncio.to_thread(
+            detect_bias, clean_title, url, final_text
+        )
+
+        perspectives_result, bias = await asyncio.gather(
+            perspectives_task,
+            bias_task
+        )
+
+        return {
+            "perspectives": perspectives_result["perspectives"],
+            "bias": bias
         }
-
-        return analysis
 
     except ValidationError as e:
         # Retry once
         try:
-            perspectives = _run_two_step_analysis(clean_title, url, final_text)
+            messages = build_perspectives_messages(
+            title=clean_title,
+            url=url,
+            text=final_text
+            )
 
-            bias = detect_bias(clean_title, url, final_text)
+            # Run perspectives + bias in parallel
+            perspectives_task = asyncio.to_thread(
+                lambda: validate(complete(messages))
+            )
 
-            analysis = {
-                "perspectives": perspectives,
+            bias_task = asyncio.to_thread(
+                detect_bias, clean_title, url, final_text
+            )
+
+            perspectives_result, bias = await asyncio.gather(
+                perspectives_task,
+                bias_task
+            )
+
+            return {
+                "perspectives": perspectives_result["perspectives"],
                 "bias": bias
             }
 
-            return analysis
 
         except ValidationError:
             raise HTTPException(
