@@ -43,11 +43,30 @@
 
 
 import os
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
+# Load .env from prism directory (same location as test.py)
+# llmService is at prism/backend/src/services/ → go up 4 levels to prism/
+_prism_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+_load_dotenv_path = os.path.join(_prism_dir, ".env")
+load_dotenv(dotenv_path=_load_dotenv_path)
+
+# Parse API key same way as test.py: support GEMENI_API_KEY from .env
+def _get_api_key():
+    key = os.getenv("GEMENI_API_KEY") or os.getenv("GEMINI_API_KEY")
+    if key:
+        return key
+    env_path = os.path.join(_prism_dir, ".env")
+    if os.path.exists(env_path):
+        with open(env_path) as f:
+            for line in f:
+                if line.startswith("GEMENI_API_KEY="):
+                    return line.strip().split("=", 1)[1]
+                if line.startswith("GEMINI_API_KEY="):
+                    return line.strip().split("=", 1)[1]
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -62,15 +81,12 @@ class LLMServiceError(Exception):
 # Client Setup
 # ---------------------------------------------------------------------------
 
-api_key = os.getenv("GEMINI_API_KEY")
+api_key = _get_api_key()
 
 if not api_key:
-    raise RuntimeError("GEMINI_API_KEY not set")
+    raise RuntimeError("GEMENI_API_KEY or GEMINI_API_KEY not set in .env (prism/.env)")
 
-genai.configure(api_key=api_key)
-
-model = genai.GenerativeModel("gemini-1.5-flash")  
-# Use gemini-1.5-pro if needed (slower but stronger)
+client = genai.Client(api_key=api_key)
 
 
 # ---------------------------------------------------------------------------
@@ -100,12 +116,13 @@ def complete(messages, temperature: float = 0.4) -> str:
             content = m["content"]
             combined_prompt += f"{role.upper()}:\n{content}\n\n"
 
-        response = model.generate_content(
-            combined_prompt,
-            generation_config={
-                "temperature": temperature,
-                "response_mime_type": "application/json"  # Forces JSON mode
-            }
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=combined_prompt,
+            config=types.GenerateContentConfig(
+                temperature=temperature,
+                response_mime_type="application/json",  # Forces JSON mode
+            ),
         )
 
         if not response.text:

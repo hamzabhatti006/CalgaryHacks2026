@@ -3,64 +3,15 @@
  * FILE PURPOSE
  * =============================================================================
  *
- * This file validates the raw LLM response and normalizes it into the
- * canonical analysis shape defined by the shared schema. It ensures the
- * API always returns a consistent structure to the extension, even when
- * the LLM output is malformed or partial.
+ * Validates LLM outputs for the two-step perspective flow:
+ * 1. Headers response: {"headers": ["...", ...]}
+ * 2. Perspectives response: {"perspectives": [{"label": "...", "body": "..."}, ...]}
  *
  * =============================================================================
- * OWNER ROLE
- * =============================================================================
- *
- * AI/Prompt Lead
- *
- * =============================================================================
- * RESPONSIBILITIES
- * =============================================================================
- *
- * - Accept raw string or parsed JSON from llmService.
- * - Parse JSON if needed; handle parse errors with a clear error type.
- * - Validate required fields and types against analysisSchema (e.g. perspectives
- *   array, each with label and body; optional bias, reflection).
- * - Normalize: coerce types, fill defaults for optional fields, or return
- *   a validation error so the route can respond with 422 or retry logic.
- * - Return either a validated/normalized object (schema-shaped) or an error
- *   payload. No HTTP or logging; pure validation.
- *
- * =============================================================================
- * INTEGRATION NOTES
- * =============================================================================
- *
- * - Called by routes/analyzeRoute.ts with the output of llmService. Route
- *   merges in biasDetection results if needed, then sends the final object
- *   to the client. Schema lives in shared/schema/analysisSchema.json; this
- *   file should reference it (or a generated type) for validation rules.
- *
- * =============================================================================
-"""
+ """
 
 import json
 from typing import Dict, Any, List
-
-
-# ---------------------------------------------------------------------------
-# CONSTANTS (MUST MATCH promptBuilder.py)
-# ---------------------------------------------------------------------------
-
-EXPECTED_LABELS = [
-    "Market-Oriented Perspective",
-    "Social Equity Perspective",
-    "Institutional Stability Perspective",
-    "Civil Liberties Perspective"
-]
-
-ALLOWED_BIAS_TYPES = [
-    "Emotional Amplification",
-    "Authority Framing",
-    "Individual Blame Emphasis",
-    "Economic Reductionism",
-    "Cultural Framing Dominance"
-]
 
 
 # ---------------------------------------------------------------------------
@@ -72,103 +23,144 @@ class ValidationError(Exception):
 
 
 # ---------------------------------------------------------------------------
-# VALIDATION LOGIC
+# FORBIDDEN GENERIC LABELS (reject to force content-specific headers)
 # ---------------------------------------------------------------------------
 
-def validate(raw_output: str) -> Dict[str, Any]:
-    """
-    Parses and validates LLM output.
+FORBIDDEN_HEADERS = [
+    "market-oriented perspective",
+    "social equity perspective",
+    "institutional stability perspective",
+    "civil liberties perspective",
+    "economic perspective",
+    "cultural perspective",
+]
 
-    Raises ValidationError if invalid.
-    Returns normalized dict if valid.
-    """
 
-    # -------------------------------
-    # Parse JSON
-    # -------------------------------
+# ---------------------------------------------------------------------------
+# STEP 1: VALIDATE HEADERS RESPONSE
+# ---------------------------------------------------------------------------
+
+def validate_headers(raw_output: str) -> List[str]:
+    """
+    Parse and validate step 1 output. Returns list of header strings.
+    """
     try:
         parsed = json.loads(raw_output)
     except json.JSONDecodeError:
         raise ValidationError("Invalid JSON from LLM")
 
-    # -------------------------------
-    # Top-level keys
-    # -------------------------------
-    if not isinstance(parsed, dict):
-        raise ValidationError("Response must be JSON object")
+    if not isinstance(parsed, dict) or "headers" not in parsed:
+        raise ValidationError("Missing 'headers' in response")
 
-    if "perspectives" not in parsed:
-        raise ValidationError("Missing 'perspectives'")
+    headers = parsed["headers"]
+    if not isinstance(headers, list):
+        raise ValidationError("'headers' must be array")
 
-    if "bias" not in parsed:
-        raise ValidationError("Missing 'bias'")
+    if not (4 <= len(headers) <= 6):
+        raise ValidationError("Must return 4-6 headers")
 
-    # -------------------------------
-    # Validate perspectives
-    # -------------------------------
+    result = []
+    for i, h in enumerate(headers):
+        if not isinstance(h, str):
+            raise ValidationError(f"Header {i + 1} must be string")
+        h = h.strip()
+        if not h:
+            raise ValidationError(f"Header {i + 1} cannot be empty")
+        h_lower = h.lower()
+        for forbidden in FORBIDDEN_HEADERS:
+            if forbidden in h_lower:
+                raise ValidationError(
+                    f"Header '{h}' is too generic. Use content-specific headers."
+                )
+        result.append(h)
+
+    return result
+
+
+# ---------------------------------------------------------------------------
+# STEP 2: VALIDATE PERSPECTIVES RESPONSE
+# ---------------------------------------------------------------------------
+
+def validate_perspectives(
+    raw_output: str, expected_labels: List[str]
+) -> Dict[str, Any]:
+    """
+    Parse and validate step 2 output. Ensures each expected label has a body.
+    Returns full analysis dict with perspectives (and optional empty bias).
+    """
+    try:
+        parsed = json.loads(raw_output)
+    except json.JSONDecodeError:
+        raise ValidationError("Invalid JSON from LLM")
+
+    if not isinstance(parsed, dict) or "perspectives" not in parsed:
+        raise ValidationError("Missing 'perspectives' in response")
+
     perspectives = parsed["perspectives"]
-
     if not isinstance(perspectives, list):
         raise ValidationError("'perspectives' must be array")
 
-    if len(perspectives) != 4:
-        raise ValidationError("Must return exactly 4 perspectives")
+    if len(perspectives) != len(expected_labels):
+        raise ValidationError(
+            f"Expected {len(expected_labels)} perspectives, got {len(perspectives)}"
+        )
 
-    labels = []
-
-    for p in perspectives:
+    normalized = []
+    for i, p in enumerate(perspectives):
         if not isinstance(p, dict):
             raise ValidationError("Perspective must be object")
 
+        body = p.get("body", str(p.get("label", ""))).strip()
+        if not body:
+            raise ValidationError(f"Perspective {i + 1} body cannot be empty")
+
+        # Use expected label from step 1 to ensure consistency
+        label = expected_labels[i] if i < len(expected_labels) else p.get("label", "").strip() or f"Perspective {i + 1}"
+        normalized.append({"label": label, "body": body})
+
+    return {
+        "perspectives": normalized,
+        "bias": {"indicators": []},  # Optional; can add bias detection later
+    }
+
+
+# ---------------------------------------------------------------------------
+# LEGACY: Single-step validate (kept for compatibility if needed)
+# ---------------------------------------------------------------------------
+
+def validate(raw_output: str) -> Dict[str, Any]:
+    """
+    Validates a single-step perspectives response (no fixed labels).
+    Used when we get perspectives directly without the headers step.
+    """
+    try:
+        parsed = json.loads(raw_output)
+    except json.JSONDecodeError:
+        raise ValidationError("Invalid JSON from LLM")
+
+    if not isinstance(parsed, dict) or "perspectives" not in parsed:
+        raise ValidationError("Missing 'perspectives'")
+
+    perspectives = parsed["perspectives"]
+    if not isinstance(perspectives, list):
+        raise ValidationError("'perspectives' must be array")
+
+    if len(perspectives) < 3 or len(perspectives) > 6:
+        raise ValidationError("Must return 3-6 perspectives")
+
+    normalized = []
+    for p in perspectives:
+        if not isinstance(p, dict):
+            raise ValidationError("Perspective must be object")
         if "label" not in p or "body" not in p:
-            raise ValidationError("Perspective missing label/body")
-
-        if not isinstance(p["label"], str) or not isinstance(p["body"], str):
-            raise ValidationError("Perspective fields must be strings")
-
-        if not p["body"].strip():
+            raise ValidationError("Perspective missing label or body")
+        label = str(p["label"]).strip()
+        body = str(p["body"]).strip()
+        if not body:
             raise ValidationError("Perspective body cannot be empty")
+        normalized.append({"label": label, "body": body})
 
-        labels.append(p["label"])
-
-    if labels != EXPECTED_LABELS:
-        raise ValidationError("Perspective labels incorrect or out of order")
-
-    # -------------------------------
-    # Validate bias
-    # -------------------------------
-    bias = parsed["bias"]
-
-    if not isinstance(bias, list):
-        raise ValidationError("'bias' must be array")
-
-    if not (2 <= len(bias) <= 4):
-        raise ValidationError("Bias count must be between 2 and 4")
-
-    for b in bias:
-        if not isinstance(b, dict):
-            raise ValidationError("Bias entry must be object")
-
-        if "type" not in b or "explanation" not in b:
-            raise ValidationError("Bias missing type/explanation")
-
-        if b["type"] not in ALLOWED_BIAS_TYPES:
-            raise ValidationError("Invalid bias type")
-
-        if not isinstance(b["explanation"], str):
-            raise ValidationError("Bias explanation must be string")
-
-        if not b["explanation"].strip():
-            raise ValidationError("Bias explanation cannot be empty")
-
-    # -------------------------------
-    # Reject extra keys (strict mode)
-    # -------------------------------
-    allowed_top_keys = {"perspectives", "bias"}
-    for key in parsed.keys():
-        if key not in allowed_top_keys:
-            raise ValidationError(f"Unexpected key: {key}")
-
-    return parsed
-
-
+    return {
+        "perspectives": normalized,
+        "bias": parsed.get("bias", {"indicators": []}),
+    }

@@ -56,7 +56,7 @@ export interface AnalysisState {
   status: AnalysisStatus;
   result: AnalysisResult | null;
   error: string | null;
-  requestMeta: { url: string; title: string } | null;
+  requestMeta: { url: string; title: string; text?: string } | null;
 }
 
 type Listener = (state: AnalysisState) => void;
@@ -122,7 +122,7 @@ export function setLoading(meta?: { url: string; title: string }): void {
   emit();
 }
 
-export function setSuccess(result: AnalysisResult, meta?: { url: string; title: string }): void {
+export function setSuccess(result: AnalysisResult, meta?: { url: string; title: string; text?: string }): void {
   state = {
     status: 'success',
     result,

@@ -1,204 +1,131 @@
-""""
+"""
  * =============================================================================
  * FILE PURPOSE
  * =============================================================================
  *
- * This file builds the prompt (and optional system prompt) sent to the LLM
- * for perspective expansion and any inline bias-awareness instructions. It
- * turns sanitized content and options into a single string (or message list)
- * that the LLM can follow to produce schema-compliant output.
+ * Two-step perspective expansion:
+ * 1. Generate content-specific perspective headers (different each time).
+ * 2. Generate descriptions for each header as it applies to the content.
+ *
+ * Example: Article about "Trump saying something racist"
+ *   Headers: "How a hardworking immigrant would feel based on the statement",
+ *            "Economic impact on affected communities", etc.
  *
  * =============================================================================
- * OWNER ROLE
- * =============================================================================
- *
- * AI/Prompt Lead
- *
- * =============================================================================
- * RESPONSIBILITIES
- * =============================================================================
- *
- * - Accept inputs: title, URL, extracted text, and optional flags (e.g.
- *   include reflection prompt, bias focus). All text must already be
- *   sanitized/truncated by the route or utils.
- * - Compose system and user messages that instruct the LLM to output
- *   structured content (e.g. perspectives array, optional bias indicators,
- *   optional reflection question) matching analysisSchema.
- * - Include clear output format instructions (JSON shape, key names) so
- *   responseValidator can parse and validate without guesswork.
- * - No LLM API calls; only string/message construction. Experiment branches
- *   (e.g. idea2_cognitive_bias_scoring, idea4_reflection_mode) may require
- *   different prompt variants; this file is the single place to add or
- *   switch prompt logic.
- *
- * =============================================================================
- * INTEGRATION NOTES
- * =============================================================================
- *
- * - Used by routes/analyzeRoute.ts before calling llmService. Route passes
- *   sanitized content; promptBuilder returns prompt(s) for llmService.
- * - Output format must align with shared/schema/analysisSchema.json and
- *   services/responseValidator.ts expectations.
- *
- * =============================================================================
- */
-"""
+ """
 
 from typing import List, Dict
 
 
 # ---------------------------------------------------------------------------
-# FIXED PERSPECTIVE LABELS
+# STEP 1: GENERATE PERSPECTIVE HEADERS
 # ---------------------------------------------------------------------------
 
-PERSPECTIVE_LABELS = [
-    "Market-Oriented Perspective",
-    "Social Equity Perspective",
-    "Institutional Stability Perspective",
-    "Civil Liberties Perspective"
-]
+def build_headers_messages(title: str, url: str, text: str) -> List[Dict[str, str]]:
+    """
+    Step 1: Ask the LLM to propose 4-5 perspective headers that would be
+    most valuable for THIS specific content. Headers represent different
+    stakeholder viewpoints, lenses, or angles.
+    """
 
-# Allowed framing bias categories (do not change order casually)
-ALLOWED_BIAS_TYPES = [
-    "Emotional Amplification",
-    "Authority Framing",
-    "Individual Blame Emphasis",
-    "Economic Reductionism",
-    "Cultural Framing Dominance"
-]
+    system_prompt = """You are a perspective-expansion analyst. Your job is to identify the most relevant viewpoints for understanding a given piece of content.
 
+CRITICAL - FORBIDDEN LABELS (never use these):
+- "Market-Oriented Perspective"
+- "Social Equity Perspective"
+- "Institutional Stability Perspective"
+- "Civil Liberties Perspective"
+- "Economic Perspective" (too generic)
+- "Cultural Perspective" (too generic)
 
-# ---------------------------------------------------------------------------
-# SYSTEM PROMPT
-# ---------------------------------------------------------------------------
+You MUST create NEW, content-specific headers. Examples of good headers:
+- "How a hardworking immigrant would feel based on the statement"
+- "Economic perspective of a poor person"
+- "View of a frontline worker in this industry"
+- "How affected communities would experience this"
+- "Interpretation from a religious minority viewpoint"
 
-def build_system_prompt() -> str:
-    return """
-You are a structured perspective-expansion engine.
+Prioritize: socioeconomic lenses, affected communities, lived experiences, emotional impact, grassroots vs institutional views. 4-5 headers. Output valid JSON only."""
 
-Your role:
-Interpret how content could be viewed under different value-based
-ideological frameworks, and identify framing biases.
+    user_prompt = f"""Analyze this content and propose 4-5 perspective headers. Each header MUST be specific to this content—name a concrete person, group, or lens (e.g., "How a single parent would view this policy", "Economic lens of a small business owner"). Do NOT use generic labels like "Market-Oriented" or "Institutional". Create fresh headers for THIS content.
 
-Strict rules:
-- Do NOT evaluate factual accuracy.
-- Do NOT add statistics or outside information.
-- Do NOT cite real-world examples.
-- Do NOT mention political parties.
-- Do NOT stereotype groups.
-- Do NOT advocate or persuade.
-- Do NOT moralize.
-- Do NOT output markdown.
-- Do NOT include commentary outside JSON.
-- Output valid JSON only.
-
-Focus only on interpretive framing.
-""".strip()
-
-
-# ---------------------------------------------------------------------------
-# USER PROMPT BUILDER
-# ---------------------------------------------------------------------------
-
-def build_user_prompt(
-    title: str,
-    url: str,
-    text: str
-) -> str:
-
-    schema_block = f"""
-Return JSON in this EXACT structure:
-
+Return JSON in this exact structure:
 {{
-  "perspectives": [
-    {{
-      "label": "{PERSPECTIVE_LABELS[0]}",
-      "body": ""
-    }},
-    {{
-      "label": "{PERSPECTIVE_LABELS[1]}",
-      "body": ""
-    }},
-    {{
-      "label": "{PERSPECTIVE_LABELS[2]}",
-      "body": ""
-    }},
-    {{
-      "label": "{PERSPECTIVE_LABELS[3]}",
-      "body": ""
-    }}
-  ],
-  "bias": [
-    {{
-      "type": "",
-      "explanation": ""
-    }}
+  "headers": [
+    "First perspective header (e.g. How X group would experience this)",
+    "Second perspective header",
+    "Third perspective header",
+    "Fourth perspective header"
   ]
 }}
 
-Perspective definitions:
+Content to analyze:
 
-- Market-Oriented Perspective:
-  Emphasizes economic freedom, incentives, market efficiency, and limited regulation.
-
-- Social Equity Perspective:
-  Emphasizes fairness, redistribution, public welfare, and collective responsibility.
-
-- Institutional Stability Perspective:
-  Emphasizes rule of law, continuity, tradition, and systemic order.
-
-- Civil Liberties Perspective:
-  Emphasizes individual autonomy, rights, and protection from overreach.
-
-Bias instructions:
-
-Identify 2–4 framing biases present in the original content.
-Allowed bias types:
-{ALLOWED_BIAS_TYPES}
-
-Each bias must:
-- Use only one of the allowed types exactly as written.
-- Provide a short neutral explanation of how the framing reflects that bias.
-
-Requirements:
-- Exactly 4 perspectives in this exact order.
-- Each body must interpret the content according to that value framework.
-- No repetition across perspectives.
-- Bias count must be between 2 and 4.
-- No extra keys.
-"""
-
-    content_block = f"""
 Title: {title}
 URL: {url}
 
-Content to analyze:
-\"\"\"{text}\"\"\"
+Content:
+\"\"\"
+{text}
+\"\"\"
 
-Generate structured ideological perspective expansion and framing bias detection.
-"""
-
-    return (schema_block + content_block).strip()
-
-
-# ---------------------------------------------------------------------------
-# PUBLIC INTERFACE
-# ---------------------------------------------------------------------------
-
-def build_messages(
-    title: str,
-    url: str,
-    text: str
-) -> List[Dict[str, str]]:
-
-    system_prompt = build_system_prompt()
-    user_prompt = build_user_prompt(
-        title=title,
-        url=url,
-        text=text
-    )
+Generate the headers."""
 
     return [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_prompt}
+        {"role": "user", "content": user_prompt},
+    ]
+
+
+# ---------------------------------------------------------------------------
+# STEP 2: GENERATE DESCRIPTIONS FOR EACH HEADER
+# ---------------------------------------------------------------------------
+
+def build_descriptions_messages(
+    title: str, url: str, text: str, headers: List[str]
+) -> List[Dict[str, str]]:
+    """
+    Step 2: For each header, generate a description/analysis of how that
+    perspective applies to the content.
+    """
+
+    headers_json = "\n".join([f'    - "{h}"' for h in headers])
+    n = len(headers)
+    examples = ", ".join([f'{{"label": "<header {i+1}>", "body": "<description {i+1}>"}}' for i in range(n)])
+
+    system_prompt = """You are a perspective-expansion analyst. For each given perspective header, you write a clear, interpretive description of how that perspective applies to the content.
+
+Rules:
+- Output valid JSON only. No markdown, no commentary.
+- Do NOT add statistics, cite sources, or introduce new facts.
+- Interpret the content through each lens. Describe how someone with that viewpoint would understand or react to the content.
+- Be empathetic and nuanced. Do not stereotype or moralize.
+- Each body should be 2-4 sentences. Distinct and non-overlapping."""
+
+    user_prompt = f"""Content:
+Title: {title}
+URL: {url}
+
+Content:
+\"\"\"
+{text}
+\"\"\"
+
+Perspective headers to expand (in this exact order):
+{headers_json}
+
+For each header, write a description (body) that interprets the content through that lens.
+
+Return JSON in this exact structure (use the exact header text for each label):
+{{
+  "perspectives": [
+    {examples}
+  ]
+}}
+
+Generate the descriptions."""
+
+    return [
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": user_prompt},
     ]

@@ -44,8 +44,8 @@ import type { AnalysisResult } from '../state/analysisStore';
 const DEFAULT_BASE_URL =
   ('http://localhost:3000');
 
-/** Timeout in ms; target &lt;3s per concept doc */
-const TIMEOUT_MS = 10000;
+/** Timeout in ms; two-step LLM flow (headers + descriptions) can take 60-90s */
+const TIMEOUT_MS = 120000;
 
 export interface AnalyzeOptions {
   baseUrl?: string;

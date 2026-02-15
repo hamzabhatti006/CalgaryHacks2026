@@ -47,67 +47,61 @@ from fastapi import APIRouter, HTTPException
 
 from src.utils.textSanitizer import sanitize_text
 from src.utils.truncation import truncate_text
-from src.services.promptBuilder import build_messages
-from src.services.responseValidator import validate, ValidationError
+from src.services.promptBuilder import build_headers_messages, build_descriptions_messages
+from src.services.responseValidator import (
+    validate_headers,
+    validate_perspectives,
+    ValidationError,
+)
 from src.services.llmService import complete, LLMServiceError
 
 router = APIRouter(prefix="/api/analyze", tags=["analyze"])
 
 
+def _run_two_step_analysis(clean_title: str, url: str, final_text: str):
+    """Step 1: Get perspective headers. Step 2: Get descriptions for each."""
+    # Step 1: Generate content-specific perspective headers
+    headers_messages = build_headers_messages(
+        title=clean_title, url=url, text=final_text
+    )
+    raw_headers = complete(headers_messages)
+    headers = validate_headers(raw_headers)
+
+    # Step 2: Generate description for each header
+    desc_messages = build_descriptions_messages(
+        title=clean_title, url=url, text=final_text, headers=headers
+    )
+    raw_descriptions = complete(desc_messages)
+    result = validate_perspectives(raw_descriptions, expected_labels=headers)
+
+    return result
+
+
 @router.post("/")
 async def analyze_content(payload: dict):
-
-    # validation
     required_fields = ["url", "title", "text"]
     for field in required_fields:
         if field not in payload:
             raise HTTPException(status_code=400, detail="Missing text field")
 
-    # sanitize
     clean_title = sanitize_text(payload["title"])
     clean_text = sanitize_text(payload["text"])
-
-    # truncate
     final_text = truncate_text(clean_text, max_chars=6000)
+    url = payload["url"]
 
-    # possible for when everythin else is built out
-
-    ## build prompt
-    messages = build_messages(title=clean_title, url=payload["url"], text=final_text)
-
-    # # call LLM
     try:
-        raw_output = complete(messages)
-        structured_output = validate(raw_output)
+        structured_output = _run_two_step_analysis(clean_title, url, final_text)
         return structured_output
-
-    except ValidationError:
-
-        # retry Once
+    except ValidationError as e:
+        # Retry once
         try:
-            raw_output_retry = complete(messages)
-            structured_output_retry = validate(raw_output_retry)
-            return structured_output_retry
-
+            structured_output = _run_two_step_analysis(clean_title, url, final_text)
+            return structured_output
         except ValidationError:
             raise HTTPException(
-                status_code=422, detail="LLM output failed validation after retry"
+                status_code=422, detail=f"LLM output failed validation: {str(e)}"
             )
-
     except LLMServiceError as e:
         raise HTTPException(status_code=502, detail=f"LLM service error: {str(e)}")
-
-    except Exception:
-        raise HTTPException(status_code=500, detail="Unexpected server error")
-
-    # # validate response schema
-    # structured_output = validate_response(raw_output)
-    #
-    # # optional bias detection layer
-    # bias_result = detect_bias(final_text)
-    #
-    # # merge final response
-    # structured_output["bias"] = bias_result
-
-    # call services here later
-    return {"status": "success", "analysis": {}}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Unexpected server error: {str(e)}")

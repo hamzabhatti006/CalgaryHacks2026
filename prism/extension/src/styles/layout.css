@@ -1,13 +1,17 @@
 /**
- * Prism popup — layout and base theme.
- * Owner: UX/Interaction Lead.
+ * Prism popup — theme: #37353E, #44444E, #715A5A, #D3DAD9
+ * Rainbow perspective bars; blue-green gradient text sections.
  */
 
- :root {
+body {
+  margin: 0;
+  background: var(--prism-bg);
+}
+
 :root {
   /* Dimensions */
-  --prism-popup-width: 380px;
-  --prism-popup-min-height: 320px;
+  --prism-popup-width: 400px;
+  --prism-popup-min-height: 360px;
   --prism-popup-max-height: 560px;
 
   /* Spacing scale */
@@ -26,18 +30,30 @@
   --prism-text-lg: 15px;
   --prism-text-xl: 17px;
   --prism-leading-tight: 1.25;
-  --prism-leading-normal: 1.45;
+  --prism-leading-normal: 1.5;
 
-  /* Colors — neutral, readable in extension popup */
-  --prism-bg: #fafafa;
-  --prism-bg-elevated: #ffffff;
-  --prism-border: #e5e5e5;
-  --prism-text: #1a1a1a;
-  --prism-text-muted: #6b6b6b;
-  --prism-accent: #2563eb;
-  --prism-accent-hover: #1d4ed8;
-  --prism-error: #b91c1c;
-  --prism-success: #15803d;
+  /* Theme colors */
+  --prism-bg: #37353E;
+  --prism-bg-elevated: #44444E;
+  --prism-muted: #715A5A;
+  --prism-text: #D3DAD9;
+  --prism-text-muted: #a8b0ae;
+  --prism-border: #715A5A;
+  --prism-accent: #5a9a8a;
+  --prism-accent-hover: #6fb5a3;
+  --prism-error: #e57373;
+  --prism-success: #81c784;
+
+  /* Blue-green gradient for text sections */
+  --prism-gradient: linear-gradient(135deg, rgba(90, 154, 138, 0.15) 0%, rgba(67, 132, 169, 0.2) 50%, rgba(90, 154, 138, 0.12) 100%);
+
+  /* Rainbow perspective bar colors (unchanged) */
+  --prism-color-1: #E4313B;
+  --prism-color-2: #4285F4;
+  --prism-color-3: #34A853;
+  --prism-color-4: #FBBC05;
+  --prism-color-5: #8A7EF0;
+  --prism-color-6: #00ACC1;
 }
 
 /* Container */
@@ -84,15 +100,72 @@
 
 /* Cards / blocks */
 .prism-card {
-  background: var(--prism-bg-elevated);
-  border: 1px solid var(--prism-border);
-  border-radius: 6px;
-  padding: var(--prism-space-md);
+  background: var(--prism-gradient);
+  border: 2px solid var(--prism-border);
+  border-radius: 10px;
+  padding: var(--prism-space-lg);
   margin-bottom: var(--prism-space-sm);
 }
 
 .prism-card:last-child {
   margin-bottom: 0;
+}
+
+/* Perspective card with colored left bar - rainbow colors organize by subtopic top to bottom */
+.prism-perspective {
+  display: flex;
+  margin-bottom: var(--prism-space-md);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--prism-gradient);
+  border: 2px solid var(--prism-border);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.prism-perspective__bar {
+  width: 6px;
+  flex-shrink: 0;
+  min-height: 100%;
+}
+
+.prism-perspective__content {
+  flex: 1;
+  padding: var(--prism-space-lg);
+}
+
+.prism-perspective__label {
+  font-weight: 600;
+  font-size: var(--prism-text-sm);
+  color: var(--prism-text);
+  margin: 0 0 var(--prism-space-sm) 0;
+}
+
+.prism-perspective__body {
+  font-size: var(--prism-text-sm);
+  line-height: var(--prism-leading-normal);
+  color: var(--prism-text-muted);
+  margin: 0;
+}
+
+/* Page content (extracted text) - blue-green gradient, padding, border */
+.prism-page-content {
+  background: var(--prism-gradient);
+  border: 2px solid var(--prism-border);
+  border-radius: 10px;
+  padding: var(--prism-space-lg);
+  margin-bottom: var(--prism-space-lg);
+  max-height: 160px;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.prism-page-content__text {
+  font-size: var(--prism-text-sm);
+  line-height: var(--prism-leading-normal);
+  color: var(--prism-text);
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 /* Lists */
@@ -115,33 +188,40 @@
 .prism-btn {
   font-family: inherit;
   font-size: var(--prism-text-sm);
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1.3;
-  padding: var(--prism-space-sm) var(--prism-space-md);
-  border: none;
-  border-radius: 6px;
+  padding: var(--prism-space-md) var(--prism-space-xl);
+  border: 2px solid var(--prism-border);
+  border-radius: 10px;
   cursor: pointer;
   background: var(--prism-accent);
-  color: #fff;
+  color: var(--prism-bg);
+  transition: background 0.2s, transform 0.1s;
 }
 
 .prism-btn:hover {
   background: var(--prism-accent-hover);
+  transform: translateY(-1px);
+}
+
+.prism-btn:active {
+  transform: translateY(0);
 }
 
 .prism-btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
+  transform: none;
 }
 
 .prism-btn--secondary {
-  background: var(--prism-bg-elevated);
-  color: var(--prism-text);
-  border: 1px solid var(--prism-border);
+  background: transparent;
+  color: var(--prism-accent);
+  border: 2px solid var(--prism-border);
 }
 
 .prism-btn--secondary:hover {
-  background: var(--prism-border);
+  background: var(--prism-gradient);
 }
 
 /* Utility */
@@ -272,4 +352,54 @@
 .prism-reflection__btn {
   margin-top: var(--prism-space-sm);
 }
+
+/* Header with logo */
+.prism-header {
+  display: flex;
+  align-items: center;
+  gap: var(--prism-space-md);
+  margin-bottom: var(--prism-space-lg);
+  padding: var(--prism-space-md) 0;
+  border-bottom: 2px solid var(--prism-border);
+}
+
+.prism-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.prism-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prism-brand__title {
+  font-size: var(--prism-text-xl);
+  font-weight: 700;
+  color: var(--prism-text);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.prism-brand__tagline {
+  font-size: var(--prism-text-sm);
+  color: var(--prism-text-muted);
+  margin: 0;
+}
+
+/* Section headings */
+.prism-heading {
+  color: var(--prism-text);
+}
+
+.prism-heading--sm {
+  color: var(--prism-text);
+}
+
+/* Popup pad */
+.prism-popup.prism-pad {
+  padding: var(--prism-space-lg);
 }

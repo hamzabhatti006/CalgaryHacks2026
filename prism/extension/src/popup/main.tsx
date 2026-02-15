@@ -4,6 +4,7 @@
  */
 
 import React from 'react';
+import logoUrl from '../assets/logo.png';
 import { createRoot } from 'react-dom/client';
 import {
   getState,
@@ -68,64 +69,101 @@ function PopupApp() {
       }
 
       const result = await analyze(res.data);
-      setSuccess(result, { url: res.data.url, title: res.data.title });
+      setSuccess(result, { url: res.data.url, title: res.data.title, text: res.data.text });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Analysis failed');
     }
   };
 
+  const Header = () => (
+    <header className="prism-header">
+      <img src={logoUrl} alt="Prism" className="prism-logo" />
+      <div className="prism-brand">
+        <h1 className="prism-brand__title">Prism</h1>
+        <p className="prism-brand__tagline">Expand perspectives on the current page.</p>
+      </div>
+    </header>
+  );
+
   if (state.status === 'loading') {
     return (
-      <div className="prism-popup">
-        <p>Analyzing…</p>
+      <div className="prism-popup prism-pad">
+        <Header />
+        <div className="prism-loading">
+          <div className="prism-loading__spinner" />
+          <p className="prism-loading__message prism-text-muted">Analyzing…</p>
+        </div>
       </div>
     );
   }
 
   if (state.status === 'error') {
     return (
-      <div className="prism-popup">
+      <div className="prism-popup prism-pad">
+        <Header />
         <p className="prism-error">{state.error}</p>
-        <button onClick={handleAnalyze}>Retry</button>
+        <button className="prism-btn" onClick={handleAnalyze}>Retry</button>
       </div>
     );
   }
 
+  const PERSPECTIVE_COLORS = ['#E4313B', '#4285F4', '#34A853', '#FBBC05', '#8A7EF0', '#00ACC1'];
+
   if (state.status === 'success' && state.result) {
     const { perspectives, bias, reflection } = state.result;
+    const pageText = state.requestMeta?.text;
     return (
-      <div className="prism-popup">
-        {state.requestMeta && <h2>{state.requestMeta.title}</h2>}
-        <section>
+      <div className="prism-popup prism-pad">
+        <Header />
+        {state.requestMeta && (
+          <>
+            <h2 className="prism-heading">{state.requestMeta.title}</h2>
+            {pageText && (
+              <section className="prism-section">
+                <h3 className="prism-heading prism-heading--sm" style={{ marginBottom: 'var(--prism-space-sm)' }}>Page content</h3>
+                <div className="prism-page-content">
+                  <p className="prism-page-content__text">{pageText.length > 1200 ? pageText.slice(0, 1200) + '…' : pageText}</p>
+                </div>
+              </section>
+            )}
+          </>
+        )}
+        <section className="prism-section">
+          <h3 className="prism-heading prism-heading--sm" style={{ marginBottom: 'var(--prism-space-md)' }}>Perspectives</h3>
           {perspectives.map((p, i) => (
             <div key={i} className="prism-perspective">
-              <strong>{p.label}</strong>
-              <p>{p.body}</p>
+              <div className="prism-perspective__bar" style={{ background: PERSPECTIVE_COLORS[i % PERSPECTIVE_COLORS.length] }} />
+              <div className="prism-perspective__content">
+                <h4 className="prism-perspective__label">{p.label}</h4>
+                <p className="prism-perspective__body">{p.body}</p>
+              </div>
             </div>
           ))}
         </section>
         {bias && Object.keys(bias).length > 0 && (
-          <section>
-            <h3>Bias indicators</h3>
-            <pre>{JSON.stringify(bias, null, 2)}</pre>
+          <section className="prism-section">
+            <h3 className="prism-heading prism-heading--sm">Bias indicators</h3>
+            <pre className="prism-card">{JSON.stringify(bias, null, 2)}</pre>
           </section>
         )}
         {reflection && (
-          <section>
-            <h3>Reflect</h3>
-            <p>{reflection}</p>
+          <section className="prism-section">
+            <h3 className="prism-heading prism-heading--sm">Reflect</h3>
+            <p className="prism-reflection__prompt">{reflection}</p>
           </section>
         )}
-        <button onClick={handleAnalyze}>Analyze again</button>
+        <button className="prism-btn prism-btn--secondary" onClick={handleAnalyze}>Analyze again</button>
       </div>
     );
   }
 
   return (
-    <div className="prism-popup">
-      <h1>Prism</h1>
-      <p>Expand perspectives on the current page.</p>
-      <button onClick={handleAnalyze}>Analyze page</button>
+    <div className="prism-popup prism-pad">
+      <Header />
+      <p className="prism-text-muted" style={{ marginBottom: 'var(--prism-space-lg)' }}>
+        Click below to analyze the current page and see multiple perspectives.
+      </p>
+      <button className="prism-btn" onClick={handleAnalyze}>Analyze page</button>
     </div>
   );
 }

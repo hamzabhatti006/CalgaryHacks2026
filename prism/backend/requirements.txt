@@ -9,5 +9,5 @@ pathspec==1.0.3
 platformdirs==4.5.1
 pytokens==0.4.0
 uvicorn==0.30.0
-google-generativeai
+google-genai
 python-dotenv
