@@ -18,11 +18,17 @@ import { analyze } from '../api/analyzeClient';
 
 function PopupApp() {
   const [state, setState] = React.useState(getState);
+  const [selectedPerspective, setSelectedPerspective] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     initFromStorage();
   }, []);
   React.useEffect(() => subscribe(setState), []);
+  React.useEffect(() => {
+    if (state.result && selectedPerspective !== null && selectedPerspective >= state.result.perspectives.length) {
+      setSelectedPerspective(null);
+    }
+  }, [state.result?.perspectives?.length, selectedPerspective]);
 
   const handleAnalyze = async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -106,14 +112,6 @@ function PopupApp() {
       </div>
     );
   }
-
-  const [selectedPerspective, setSelectedPerspective] = React.useState<number | null>(null);
-
-  React.useEffect(() => {
-    if (state.result && selectedPerspective !== null && selectedPerspective >= state.result.perspectives.length) {
-      setSelectedPerspective(null);
-    }
-  }, [state.result?.perspectives?.length, selectedPerspective]);
 
   if (state.status === 'success' && state.result) {
     const { perspectives, bias, reflection, pageSummary } = state.result;

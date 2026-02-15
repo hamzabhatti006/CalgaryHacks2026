@@ -300,7 +300,7 @@ body {
   align-items: center;
   justify-content: center;
   gap: var(--prism-space-md);
-  min-height: 120px;
+  min-height: 200px;
 }
 
 .prism-loading__spinner {

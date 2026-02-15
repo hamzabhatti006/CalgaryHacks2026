@@ -39,18 +39,18 @@ function createSidebar(): void {
     transition: box-shadow 0.2s;
   `;
 
-  const label = document.createElement('span');
-  label.textContent = 'Prism';
-  label.style.cssText = `
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    font-size: 14px;
-    font-weight: 600;
-    color: #D3DAD9;
-    letter-spacing: 1px;
+  const logoUrl = chrome.runtime.getURL('icons/logo.png');
+  const logoImg = document.createElement('img');
+  logoImg.src = logoUrl;
+  logoImg.alt = 'Prism';
+  logoImg.setAttribute('aria-hidden', 'true');
+  logoImg.style.cssText = `
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
   `;
 
-  tab.appendChild(label);
+  tab.appendChild(logoImg);
 
   const panel = document.createElement('div');
   panel.id = 'prism-floating-panel';
