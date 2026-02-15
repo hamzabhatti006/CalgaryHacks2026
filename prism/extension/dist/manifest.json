@@ -12,7 +12,6 @@
     "https://*/*"
   ],
   "action": {
-    "default_popup": "popup.html",
     "default_title": "Prism",
     "default_icon": {
       "16": "icons/icon16.png",
@@ -20,10 +19,14 @@
       "128": "icons/icon128.png"
     }
   },
+  "background": {
+    "service_worker": "service-worker-loader.js",
+    "type": "module"
+  },
   "content_scripts": [
     {
       "js": [
-        "assets/index.ts-lcgKXULS.js"
+        "assets/index.ts-BqGWcJWi.js"
       ],
       "matches": [
         "http://*/*",
@@ -41,7 +44,7 @@
         "popup.html",
         "icons/icon48.png",
         "icons/logo.png",
-        "assets/index.ts-lcgKXULS.js"
+        "assets/index.ts-BqGWcJWi.js"
       ],
       "use_dynamic_url": false
     }
