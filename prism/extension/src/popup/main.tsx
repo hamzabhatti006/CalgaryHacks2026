@@ -16,6 +16,33 @@ import {
 } from '../state/analysisStore';
 import { analyze } from '../api/analyzeClient';
 
+/** Parse extracted text into bullet blocks; collapse excessive whitespace. */
+function parsePageContentBlocks(text: string): string[] {
+  const normalized = text
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]+/g, ' ')
+    .trim();
+  if (!normalized) return [];
+  let blocks = normalized.split(/(?=Comment by |Reply by )/i).map((b) => b.trim()).filter(Boolean);
+  blocks = blocks.filter((b) => !/^All Comments\.?$/i.test(b));
+  return blocks;
+}
+
+function PageContentBullets({ text, maxLength }: { text: string; maxLength: number }) {
+  const truncated = text.length > maxLength ? text.slice(0, maxLength) + '…' : text;
+  const blocks = parsePageContentBlocks(truncated);
+  if (blocks.length === 0) {
+    return <p className="prism-page-content__text">{truncated.replace(/\n{2,}/g, '\n').trim()}</p>;
+  }
+  return (
+    <ul className="prism-list prism-page-content__list">
+      {blocks.map((block, i) => (
+        <li key={i} className="prism-page-content__item">{block}</li>
+      ))}
+    </ul>
+  );
+}
+
 function PopupApp() {
   const [state, setState] = React.useState(getState);
 
@@ -122,7 +149,7 @@ function PopupApp() {
               <section className="prism-section">
                 <h3 className="prism-heading prism-heading--sm" style={{ marginBottom: 'var(--prism-space-sm)' }}>Page content</h3>
                 <div className="prism-page-content">
-                  <p className="prism-page-content__text">{pageText.length > 1200 ? pageText.slice(0, 1200) + '…' : pageText}</p>
+                  <PageContentBullets text={pageText} maxLength={1200} />
                 </div>
               </section>
             )}

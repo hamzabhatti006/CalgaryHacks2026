@@ -168,6 +168,34 @@ body {
   word-break: break-word;
 }
 
+.prism-page-content__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.prism-page-content__item {
+  font-size: var(--prism-text-sm);
+  line-height: var(--prism-leading-normal);
+  color: var(--prism-text);
+  margin: 0 0 var(--prism-space-sm) 0;
+  padding-left: var(--prism-space-md);
+  position: relative;
+  word-break: break-word;
+}
+
+.prism-page-content__item::before {
+  content: '•';
+  position: absolute;
+  left: 0;
+  color: var(--prism-accent);
+  font-weight: bold;
+}
+
+.prism-page-content__item:last-child {
+  margin-bottom: 0;
+}
+
 /* Lists */
 .prism-list {
   list-style: none;
