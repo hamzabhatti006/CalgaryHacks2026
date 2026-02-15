@@ -162,5 +162,4 @@ def validate(raw_output: str) -> Dict[str, Any]:
 
     return {
         "perspectives": normalized,
-        "bias": parsed.get("bias", {"indicators": []}),
     }

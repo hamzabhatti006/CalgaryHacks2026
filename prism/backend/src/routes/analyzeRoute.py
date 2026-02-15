@@ -54,6 +54,7 @@ from src.services.responseValidator import (
     ValidationError,
 )
 from src.services.llmService import complete, LLMServiceError
+from src.logic.biasDetection import detect_bias
 
 router = APIRouter(prefix="/api/analyze", tags=["analyze"])
 
@@ -74,7 +75,7 @@ def _run_two_step_analysis(clean_title: str, url: str, final_text: str):
     raw_descriptions = complete(desc_messages)
     result = validate_perspectives(raw_descriptions, expected_labels=headers)
 
-    return result
+    return result["perspectives"]
 
 
 @router.post("/")
@@ -90,13 +91,31 @@ async def analyze_content(payload: dict):
     url = payload["url"]
 
     try:
-        structured_output = _run_two_step_analysis(clean_title, url, final_text)
-        return structured_output
+        perspectives = _run_two_step_analysis(clean_title, url, final_text)
+
+        bias = detect_bias(clean_title, url, final_text)
+
+        analysis = {
+        "perspectives": perspectives,
+        "bias": bias
+        }
+
+        return analysis
+
     except ValidationError as e:
         # Retry once
         try:
-            structured_output = _run_two_step_analysis(clean_title, url, final_text)
-            return structured_output
+            perspectives = _run_two_step_analysis(clean_title, url, final_text)
+
+            bias = detect_bias(clean_title, url, final_text)
+
+            analysis = {
+                "perspectives": perspectives,
+                "bias": bias
+            }
+
+            return analysis
+
         except ValidationError:
             raise HTTPException(
                 status_code=422, detail=f"LLM output failed validation: {str(e)}"
