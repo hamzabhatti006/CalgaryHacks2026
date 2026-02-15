@@ -11,6 +11,11 @@ chrome.runtime.onMessage.addListener(
     _sender: chrome.runtime.MessageSender,
     sendResponse: (r: unknown) => void
   ) => {
+    if (msg?.type === 'OPEN_SIDEBAR') {
+      window.dispatchEvent(new CustomEvent('prism-open-sidebar'));
+      sendResponse({ ok: true });
+      return true;
+    }
     if (msg?.type !== 'EXTRACT') return;
     try {
       const result = extractContent(document);

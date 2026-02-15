@@ -27,8 +27,8 @@ function createSidebar(): void {
   tab.style.cssText = `
     width: ${TAB_WIDTH}px;
     height: ${TAB_HEIGHT}px;
-    background: linear-gradient(135deg, #37353E 0%, #44444E 100%);
-    border: 1px solid #715A5A;
+    background: #2C2C2C;
+    border: 1px solid #404040;
     border-right: none;
     border-radius: 12px 0 0 12px;
     box-shadow: -4px 0 12px rgba(0,0,0,0.2);
@@ -62,8 +62,8 @@ function createSidebar(): void {
     width: ${PANEL_WIDTH}px;
     height: 90vh;
     max-height: 600px;
-    background: #37353E;
-    border: 1px solid #715A5A;
+    background: #121212;
+    border: 1px solid #404040;
     border-radius: 12px 0 0 12px;
     box-shadow: -8px 0 24px rgba(0,0,0,0.3);
     overflow: hidden;
@@ -87,10 +87,10 @@ function createSidebar(): void {
     right: 8px;
     width: 28px;
     height: 28px;
-    background: rgba(255,255,255,0.1);
-    border: 1px solid #715A5A;
+    background: #2C2C2C;
+    border: 1px solid #404040;
     border-radius: 6px;
-    color: #D3DAD9;
+    color: #FFFFFF;
     font-size: 18px;
     line-height: 1;
     cursor: pointer;
@@ -105,12 +105,14 @@ function createSidebar(): void {
   function openPanel(): void {
     isOpen = true;
     panel.style.display = 'block';
+    tab.style.display = 'none';
     tab.style.borderRadius = '0';
   }
 
   function closePanel(): void {
     isOpen = false;
     panel.style.display = 'none';
+    tab.style.display = 'flex';
     tab.style.borderRadius = '12px 0 0 12px';
   }
 
@@ -127,6 +129,10 @@ function createSidebar(): void {
   });
 
   closeBtn.addEventListener('click', closePanel);
+
+  window.addEventListener('prism-open-sidebar', () => {
+    if (!isOpen) openPanel();
+  });
 
   root.appendChild(panel);
   root.appendChild(tab);
