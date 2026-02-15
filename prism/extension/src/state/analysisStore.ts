@@ -43,10 +43,15 @@ export interface Perspective {
   body: string;
 }
 
+/** Bias shape from backend: indicators array only (e.g. "Emotional framing", "Loaded language") */
+export interface BiasResult {
+  indicators: string[];
+}
+
 /** Response shape per shared/schema/analysisSchema.json */
 export interface AnalysisResult {
   perspectives: Perspective[];
-  bias?: Record<string, unknown>;
+  bias?: BiasResult;
   reflection?: string;
 }
 

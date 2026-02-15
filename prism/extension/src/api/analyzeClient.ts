@@ -86,10 +86,15 @@ export async function analyze(
       throw new Error('Invalid response: missing perspectives');
     }
 
+    const indicators = Array.isArray(data?.bias?.indicators)
+      ? data.bias.indicators.filter((x: unknown) => typeof x === 'string' && String(x).trim().length > 0)
+      : [];
+    const bias = indicators.length > 0 ? { indicators } : undefined;
+
     return {
       perspectives: data.perspectives,
-      bias: data.bias,
-      reflection: data.reflection,
+      bias,
+      reflection: typeof data?.reflection === 'string' ? data.reflection : undefined,
     } as AnalysisResult;
   } catch (err) {
     clearTimeout(id);
