@@ -199,6 +199,15 @@
 }
 
 /* Matrix */
+.prism-matrix {
+  display: grid;
+  gap: var(--prism-space-sm);
+}
+
+.prism-matrix__card {
+  margin-bottom: 0;
+}
+
 .prism-matrix__label {
   font-weight: 600;
   font-size: var(--prism-text-sm);
