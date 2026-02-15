@@ -24,19 +24,34 @@
           "items": {
             "type": "object",
             "properties": {
-              "label": { "type": "string" },
-              "body": { "type": "string" }
+              "label": { "type": "string", "description": "Short lens name (e.g. Economic, Cultural, Institutional)." },
+              "body": { "type": "string", "description": "Full interpretation text." },
+              "coreFraming": { "type": "string", "description": "Optional one-line core framing for matrix column." },
+              "stakeholderImpact": { "type": "string", "description": "Optional who is advantaged/disadvantaged." },
+              "assumption": { "type": "string", "description": "Optional key assumption behind this lens." }
             },
             "required": ["label", "body"]
           }
         },
         "bias": {
-          "type": "object",
-          "description": "Bias indicators or scores; shape may vary by experiment."
+          "description": "Bias indicators; non-accusatory framing. Shape: indicators array (preferred) or free-form object.",
+          "oneOf": [
+            {
+              "type": "object",
+              "properties": {
+                "indicators": {
+                  "type": "array",
+                  "items": { "type": "string" },
+                  "description": "Short labels, e.g. 'Emotional language', 'Authority emphasis', 'Economic framing'."
+                }
+              }
+            },
+            { "type": "object" }
+          ]
         },
         "reflection": {
           "type": "string",
-          "description": "Optional reflection prompt or question for the user."
+          "description": "Optional reflection prompt or question for the user (e.g. which lens surprised you, what assumption does the original rely on)."
         }
       },
       "required": ["perspectives"]

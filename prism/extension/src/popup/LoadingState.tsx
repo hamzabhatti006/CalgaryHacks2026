@@ -1,33 +1,27 @@
 /**
- * =============================================================================
- * FILE PURPOSE
- * =============================================================================
- *
- * This file renders the loading state of the popup while analysis is in
- * progress: spinner, progress message, or skeleton so users know the extension
- * is working and not frozen.
- *
- * =============================================================================
- * OWNER ROLE
- * =============================================================================
- *
- * UX/Interaction Lead
- *
- * =============================================================================
- * RESPONSIBILITIES
- * =============================================================================
- *
- * - Show a clear loading indicator (e.g. spinner or skeleton for matrix/indicators).
- * - Optional: short status text (e.g. "Analyzing…", "Building perspectives…").
- * - No logic for triggering analysis; only display. Parent controls when to show.
- * - Accessible: ensure screen readers get loading state (e.g. aria-live or role).
- *
- * =============================================================================
- * INTEGRATION NOTES
- * =============================================================================
- *
- * - Rendered by Popup.tsx when analysisStore indicates loading (or equivalent).
- * - Styling consistent with layout.css and the rest of the popup.
- *
- * =============================================================================
+ * Loading state for the popup while analysis is in progress.
+ * Owner: UX/Interaction Lead.
  */
+
+import React from 'react';
+
+const MESSAGES = [
+  'Analyzing…',
+  'Building perspectives…',
+  'Identifying lenses…',
+];
+
+export function LoadingState({ message }: { message?: string }) {
+  const displayMessage = message ?? MESSAGES[0];
+  return (
+    <div
+      className="prism-loading prism-pad"
+      role="status"
+      aria-live="polite"
+      aria-label="Analysis in progress"
+    >
+      <div className="prism-loading__spinner" aria-hidden="true" />
+      <p className="prism-loading__message prism-text-muted">{displayMessage}</p>
+    </div>
+  );
+}
