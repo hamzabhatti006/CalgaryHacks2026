@@ -40,10 +40,14 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.routes.analyzeRoute import router as analyze_router
+from src.routes.keywordsRoute import router as keywords_router
+
 
 app = FastAPI()
 
 app.include_router(analyze_router)
+app.include_router(keywords_router)
+
 
 app.add_middleware(
     CORSMiddleware,

@@ -10,3 +10,11 @@ prism/backend/venv/
 # OS files
 .DS_Store
 
+# Extension build output
+extension/dist/
+
+# Extension dependencies
+extension/node_modules/
+
+# Python venv
+backend/venv/

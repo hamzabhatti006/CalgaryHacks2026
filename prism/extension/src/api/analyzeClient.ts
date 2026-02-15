@@ -127,3 +127,20 @@ export async function analyze(
     throw new Error('Analysis request failed');
   }
 }
+
+export async function generateKeywords(
+  label: string,
+  body: string,
+  title: string
+): Promise<string[]> {
+  const res = await fetch(`${DEFAULT_BASE_URL}/api/keywords/`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ label, body, title })
+  });
+
+  if (!res.ok) throw new Error('Keyword generation failed');
+
+  const data = await res.json();
+  return Array.isArray(data.keywords) ? data.keywords : [];
+}
