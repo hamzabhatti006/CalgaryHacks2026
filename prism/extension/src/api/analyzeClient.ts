@@ -42,7 +42,7 @@ import type { AnalysisResult } from '../state/analysisStore';
 
 /** Backend base URL; override via VITE_PRISM_API_BASE_URL env */
 const DEFAULT_BASE_URL =
-  (import.meta?.env?.VITE_PRISM_API_BASE_URL as string | undefined) || 'http://localhost:3000';
+  ('http://localhost:3000');
 
 /** Timeout in ms; target &lt;3s per concept doc */
 const TIMEOUT_MS = 10000;
