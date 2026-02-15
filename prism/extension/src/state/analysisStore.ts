@@ -53,6 +53,7 @@ export interface AnalysisResult {
   perspectives: Perspective[];
   bias?: BiasResult;
   reflection?: string;
+  pageSummary?: string[];
 }
 
 export type AnalysisStatus = 'idle' | 'loading' | 'success' | 'error';

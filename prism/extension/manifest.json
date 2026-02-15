@@ -19,5 +19,11 @@
       "matches": ["http://*/*", "https://*/*"],
       "js": ["src/content/index.ts"]
     }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["popup.html"],
+      "matches": ["http://*/*", "https://*/*"]
+    }
   ]
 }

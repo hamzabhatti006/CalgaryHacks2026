@@ -52,6 +52,13 @@
         "reflection": {
           "type": "string",
           "description": "Optional reflection prompt or question for the user (e.g. which lens surprised you, what assumption does the original rely on)."
+        },
+        "pageSummary": {
+          "type": "array",
+          "description": "3 brief bullet sentences summarizing the page.",
+          "items": { "type": "string" },
+          "minItems": 3,
+          "maxItems": 3
         }
       },
       "required": ["perspectives"]

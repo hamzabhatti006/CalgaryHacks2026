@@ -107,62 +107,95 @@ function PopupApp() {
     );
   }
 
-  const PERSPECTIVE_COLORS = ['#E4313B', '#4285F4', '#34A853', '#FBBC05', '#8A7EF0', '#00ACC1'];
+  const [selectedPerspective, setSelectedPerspective] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (state.result && selectedPerspective !== null && selectedPerspective >= state.result.perspectives.length) {
+      setSelectedPerspective(null);
+    }
+  }, [state.result?.perspectives?.length, selectedPerspective]);
 
   if (state.status === 'success' && state.result) {
-    const { perspectives, bias, reflection } = state.result;
-    const pageText = state.requestMeta?.text;
-    return (
-      <div className="prism-popup prism-pad">
-        <Header />
-        {state.requestMeta && (
-          <>
-            <h2 className="prism-heading">{state.requestMeta.title}</h2>
-            {pageText && (
-              <section className="prism-section">
-                <h3 className="prism-heading prism-heading--sm" style={{ marginBottom: 'var(--prism-space-sm)' }}>Page content</h3>
-                <div className="prism-page-content">
-                  <p className="prism-page-content__text">{pageText.length > 1200 ? pageText.slice(0, 1200) + '…' : pageText}</p>
+    const { perspectives, bias, reflection, pageSummary } = state.result;
+    const title = state.requestMeta?.title ?? 'Page';
+
+    if (selectedPerspective !== null) {
+      const p = perspectives[selectedPerspective];
+      if (p) {
+        return (
+          <div className="prism-popup prism-pad">
+            <Header />
+            <h2 className="prism-heading">{title}</h2>
+            <p className="prism-perspective-expanded-label">{p.label}</p>
+            <section className="prism-section">
+              <div className="prism-page-content prism-expanded-content">
+                <p className="prism-perspective-body-expanded">{p.body}</p>
+                {Array.isArray(pageSummary) && pageSummary.length >= 3 && (
+                  <ul className="prism-list prism-page-content__list prism-summary-in-expanded">
+                    {pageSummary.map((s, i) => (
+                      <li key={i} className="prism-page-content__item">{s}</li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </section>
+            {Array.isArray(bias?.indicators) && bias.indicators.length > 0 && (
+              <section className="prism-section prism-bias-section">
+                <h3 className="prism-bias-heading">Detected Biases</h3>
+                <div className="prism-bias-chips" role="list">
+                  {bias.indicators.map((label, i) => (
+                    <span key={i} className="prism-bias-chip" role="listitem">{label}</span>
+                  ))}
                 </div>
               </section>
             )}
-          </>
-        )}
+            {reflection && (
+              <section className="prism-section prism-reflection-expanded">
+                <div className="prism-reflection-header">
+                  <span className="prism-reflection-check">✓</span>
+                  <span>Reflection Unlocked!</span>
+                </div>
+                <p className="prism-reflection__prompt">{reflection}</p>
+              </section>
+            )}
+            <button className="prism-btn prism-btn-go-back" onClick={() => setSelectedPerspective(null)}>
+              Go Back
+            </button>
+          </div>
+        );
+      }
+    }
+
+    const summaryText = Array.isArray(pageSummary) && pageSummary.length >= 3
+      ? pageSummary.join(' ')
+      : 'Click Analyze to see perspectives on this page.';
+
+    return (
+      <div className="prism-popup prism-pad">
+        <Header />
+        <h2 className="prism-heading">{title}</h2>
+        <p className="prism-summary-preview prism-text-muted">{summaryText}</p>
         <section className="prism-section">
-          <h3 className="prism-heading prism-heading--sm" style={{ marginBottom: 'var(--prism-space-md)' }}>Perspectives</h3>
-          {perspectives.map((p, i) => (
-            <div key={i} className="prism-perspective">
-              <div className="prism-perspective__bar" style={{ background: PERSPECTIVE_COLORS[i % PERSPECTIVE_COLORS.length] }} />
-              <div className="prism-perspective__content">
-                <h4 className="prism-perspective__label">{p.label}</h4>
-                <p className="prism-perspective__body">{p.body}</p>
-              </div>
-            </div>
-          ))}
+          <h3 className="prism-perspectives-heading">Perspectives</h3>
+          <div className="prism-perspectives-divider" />
+          <div className="prism-perspective-cards">
+            {perspectives.map((p, i) => (
+              <button
+                key={i}
+                type="button"
+                className="prism-perspective-card"
+                onClick={() => setSelectedPerspective(i)}
+              >
+                <h4 className="prism-perspective-card__title">{p.label}</h4>
+                <p className="prism-perspective-card__subtitle">View insights from this angle</p>
+              </button>
+            ))}
+          </div>
         </section>
-        {Array.isArray(bias?.indicators) && bias.indicators.length > 0 && (
-          <section
-            className="prism-section prism-bias-section"
-            aria-labelledby="prism-bias-heading"
-          >
-            <h3 id="prism-bias-heading" className="prism-bias-heading">
-              Detected Biases
-            </h3>
-            <div className="prism-bias-chips" role="list">
-              {bias.indicators.map((label, i) => (
-                <span key={i} className="prism-bias-chip" role="listitem">
-                  {label}
-                </span>
-              ))}
-            </div>
-          </section>
-        )}
-        {reflection && (
-          <section className="prism-section">
-            <h3 className="prism-heading prism-heading--sm">Reflect</h3>
-            <p className="prism-reflection__prompt">{reflection}</p>
-          </section>
-        )}
+        <p className="prism-footer-hint prism-text-muted">
+          <span className="prism-footer-icon" aria-hidden>ℹ</span>
+          Select a perspective for more insights
+        </p>
         <button className="prism-btn prism-btn--secondary" onClick={handleAnalyze}>Analyze again</button>
       </div>
     );

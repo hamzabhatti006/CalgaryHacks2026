@@ -1,9 +1,9 @@
 /**
- * Content script entry: listens for EXTRACT messages from popup and returns
- * extracted content. Must run in page context for DOM access.
+ * Content script entry: listens for EXTRACT messages, injects floating sidebar.
  */
 
 import { extractContent } from './extractContent';
+import './sidebar';
 
 chrome.runtime.onMessage.addListener(
   (

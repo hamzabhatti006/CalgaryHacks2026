@@ -91,10 +91,15 @@ export async function analyze(
       : [];
     const bias = indicators.length > 0 ? { indicators } : undefined;
 
+    const pageSummary = Array.isArray(data?.pageSummary)
+      ? data.pageSummary.filter((x: unknown) => typeof x === 'string' && String(x).trim().length > 0)
+      : undefined;
+
     return {
       perspectives: data.perspectives,
       bias,
       reflection: typeof data?.reflection === 'string' ? data.reflection : undefined,
+      pageSummary: pageSummary && pageSummary.length >= 3 ? pageSummary.slice(0, 3) : undefined,
     } as AnalysisResult;
   } catch (err) {
     clearTimeout(id);

@@ -90,10 +90,13 @@ async def analyze_content(payload: dict):
             bias_task
         )
 
-        return {
+        payload = {
             "perspectives": perspectives_result["perspectives"],
             "bias": bias
         }
+        if "pageSummary" in perspectives_result:
+            payload["pageSummary"] = perspectives_result["pageSummary"]
+        return payload
 
     except ValidationError as e:
         # Retry once
@@ -118,11 +121,13 @@ async def analyze_content(payload: dict):
                 bias_task
             )
 
-            return {
+            payload = {
                 "perspectives": perspectives_result["perspectives"],
                 "bias": bias
             }
-
+            if "pageSummary" in perspectives_result:
+                payload["pageSummary"] = perspectives_result["pageSummary"]
+            return payload
 
         except ValidationError:
             raise HTTPException(

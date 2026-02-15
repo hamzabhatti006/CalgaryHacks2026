@@ -23,7 +23,7 @@
   "content_scripts": [
     {
       "js": [
-        "assets/index.ts-BpBgtWlr.js"
+        "assets/index.ts-BqPq_4DP.js"
       ],
       "matches": [
         "http://*/*",
@@ -38,7 +38,8 @@
         "https://*/*"
       ],
       "resources": [
-        "assets/index.ts-BpBgtWlr.js"
+        "popup.html",
+        "assets/index.ts-BqPq_4DP.js"
       ],
       "use_dynamic_url": false
     }

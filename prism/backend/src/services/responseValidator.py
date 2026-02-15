@@ -160,6 +160,17 @@ def validate(raw_output: str) -> Dict[str, Any]:
             raise ValidationError("Perspective body cannot be empty")
         normalized.append({"label": label, "body": body})
 
-    return {
-        "perspectives": normalized,
-    }
+    # Extract and validate pageSummary (exactly 3 brief bullets)
+    page_summary = []
+    if "pageSummary" in parsed and isinstance(parsed["pageSummary"], list):
+        for s in parsed["pageSummary"]:
+            if isinstance(s, str) and s.strip():
+                page_summary.append(s.strip())
+        page_summary = page_summary[:3]  # Keep only first 3
+        if len(page_summary) < 3:
+            page_summary = []
+
+    result = {"perspectives": normalized}
+    if page_summary:
+        result["pageSummary"] = page_summary
+    return result

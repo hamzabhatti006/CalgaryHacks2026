@@ -212,6 +212,11 @@ Output valid JSON only. No markdown. No commentary.
 Return JSON in this exact structure:
 
 {{
+  "pageSummary": [
+    "One brief sentence: main topic.",
+    "One brief sentence: key fact.",
+    "One brief sentence: significance or takeaway."
+  ],
   "perspectives": [
     {{
       "label": "Content-specific header (concrete stakeholder or lens)",
@@ -219,6 +224,8 @@ Return JSON in this exact structure:
     }}
   ]
 }}
+
+pageSummary: Write exactly 3 brief sentences. One sentence per bullet. Each must be under 15 words. Cover: (1) main topic, (2) one key fact, (3) significance or takeaway. No run-ons.
 
 Content:
 
