@@ -47,6 +47,9 @@ from fastapi import APIRouter, HTTPException
 
 from src.utils.textSanitizer import sanitize_text
 from src.utils.truncation import truncate_text
+from src.services.promptBuilder import build_messages
+from src.services.responseValidator import validate, ValidationError
+from src.services.llmService import complete, LLMServiceError
 
 router = APIRouter(prefix="/api/analyze", tags=["analyze"])
 
@@ -70,15 +73,33 @@ async def analyze_content(payload: dict):
     # possible for when everythin else is built out
 
     ## build prompt
-    # prompt = build_prompt(
-    #     url=payload["url"],
-    #     title=clean_title,
-    #     text=final_text
-    # )
-    #
+    messages = build_messages(title=clean_title, url=payload["url"], text=final_text)
+
     # # call LLM
-    # raw_output = await call_llm(prompt)
-    #
+    try:
+        raw_output = complete(messages)
+        structured_output = validate(raw_output)
+        return structured_output
+
+    except ValidationError:
+
+        # retry Once
+        try:
+            raw_output_retry = complete(messages)
+            structured_output_retry = validate(raw_output_retry)
+            return structured_output_retry
+
+        except ValidationError:
+            raise HTTPException(
+                status_code=422, detail="LLM output failed validation after retry"
+            )
+
+    except LLMServiceError as e:
+        raise HTTPException(status_code=502, detail=f"LLM service error: {str(e)}")
+
+    except Exception:
+        raise HTTPException(status_code=500, detail="Unexpected server error")
+
     # # validate response schema
     # structured_output = validate_response(raw_output)
     #
