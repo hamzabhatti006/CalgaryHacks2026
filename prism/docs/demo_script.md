@@ -6,37 +6,33 @@ Product/Demo Lead.
 
 ## Purpose
 
-This document is a suggested flow for presenting Prism to judges or stakeholders during the hackathon. It is a script only; no implementation. Adjust timing and emphasis based on which experiment (idea1–4) is in focus.
+Suggested flow for presenting Prism to judges (2–3 minutes). Aligns with concept doc: hook → problem → demo (matrix, bias, reflection) → close. Adjust timing and emphasis by experiment (idea1–4).
 
 ---
 
-## Suggested Flow
+## Timed Flow (2–3 minutes)
 
-1. **Hook (30 sec)**  
-   “We’re used to reading one article and one framing. Prism helps you see multiple perspectives and reflect on how content might be shaping your view.”
+| Time | Segment | Action |
+|------|---------|--------|
+| **0:00 – 0:30** | Hook | Open a real post or article (e.g. criticism of a public figure at a major event). “Most people read this in one framing. Prism helps you see multiple perspectives and pause to reflect.” |
+| **0:30 – 1:15** | Matrix | Click “Analyze with Prism.” Show loading (“Building perspectives…”), then the perspective matrix: cultural, economic, institutional, individual-impact lenses. Point out how stakeholders and assumptions differ per lens. |
+| **1:15 – 1:45** | Bias | Highlight framing notes: “This framing emphasizes emotional language and individual blame.” Non-accusatory; no true/false. |
+| **1:45 – 2:15** | Reflection | Read the reflection question and answer live if possible: “I hadn’t considered the economic incentives behind this framing.” |
+| **2:15 – 2:45** | Close | “Prism doesn’t tell you what’s true. It equips you to reason more deliberately.” Optional: one line on tech (extension + lightweight backend, structured LLM output). |
 
-2. **Problem (30 sec)**  
-   “Single-source reading reinforces bias and bubbles. We wanted a lightweight tool that doesn’t replace your reading—it sits on top of it.”
+---
 
-3. **Demo (3–4 min)**  
-   - Open a real article (e.g. news or opinion).
-   - Open the Prism popup; trigger “Analyze.”
-   - Show loading state, then the result: perspective matrix (different framings), bias indicators, and reflection prompt.
-   - Briefly read one perspective and the reflection question to show “other angles” and “pause to reflect.”
+## Talking Points
 
-4. **Technical (1 min)**  
-   “Browser extension extracts the content; a small backend runs an LLM to generate perspectives and optional bias signals. Everything is structured so we can swap in different experiments—for example cognitive bias scoring or source comparison—without changing the core flow.”
-
-5. **Experiments (1 min)**  
-   “We’ve outlined four directions: perspective-first matrix, cognitive bias scoring, multi-source comparison, and reflection mode. The repo is modular so we can pivot or combine them for the demo.”
-
-6. **Close (30 sec)**  
-   “Prism: structured perspective expansion and reflection, right where you read.”
+- **Problem:** Single-source reading reinforces one framing; fact-checkers address accuracy, not interpretive bias.
+- **Solution:** Perspective expansion + framing notes + reflection prompt—all in the flow of reading.
+- **Differentiation:** Not a fact-checker; no true/false. We expand interpretation and prompt reflection.
+- **Technical (if asked):** Extension extracts content; backend sanitizes, prompts LLM, validates response; UI shows matrix, bias indicators, reflection. Modular so we can swap experiments (perspective-first, bias scoring, source comparison, reflection mode).
 
 ---
 
 ## Notes
 
-- Keep the tab and article visible so the demo feels like “reading with Prism,” not a separate app.
-- If time is short, drop technical and experiments and end on the reflection prompt.
-- If judges ask “what’s next,” point to experiments/ READMEs and optional schema extensions (e.g. second source, bias scores).
+- Keep the article/post visible so the demo feels like “reading with Prism,” not a separate app.
+- If time is short, drop technical detail and end on the reflection prompt.
+- For “what’s next,” point to `experiments/` READMEs and optional schema extensions.

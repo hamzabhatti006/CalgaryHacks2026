@@ -4,6 +4,7 @@
  */
 
  :root {
+:root {
   /* Dimensions */
   --prism-popup-width: 380px;
   --prism-popup-min-height: 320px;
@@ -270,4 +271,5 @@
 
 .prism-reflection__btn {
   margin-top: var(--prism-space-sm);
+}
 }
