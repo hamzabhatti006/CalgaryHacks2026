@@ -147,6 +147,28 @@ function PopupApp() {
                 </div>
               </section>
             )}
+            <section className="prism-section prism-search-keywords-section" aria-labelledby="prism-search-keywords-heading">
+              <h3 id="prism-search-keywords-heading" className="prism-search-keywords-heading">
+                Words to search to learn about this perspective
+              </h3>
+              <div className="prism-search-keywords-chips" role="list">
+                {(Array.isArray(p.searchKeywords) && p.searchKeywords.length > 0
+                  ? p.searchKeywords
+                  : [p.label, title].filter(Boolean)
+                ).map((phrase, i) => (
+                  <a
+                    key={i}
+                    className="prism-search-keyword-chip"
+                    href={`https://www.google.com/search?q=${encodeURIComponent(phrase)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    role="listitem"
+                  >
+                    {phrase}
+                  </a>
+                ))}
+              </div>
+            </section>
             {reflection && (
               <section className="prism-section prism-reflection-expanded">
                 <div className="prism-reflection-header">

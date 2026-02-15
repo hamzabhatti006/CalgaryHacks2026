@@ -28,7 +28,8 @@
               "body": { "type": "string", "description": "Full interpretation text." },
               "coreFraming": { "type": "string", "description": "Optional one-line core framing for matrix column." },
               "stakeholderImpact": { "type": "string", "description": "Optional who is advantaged/disadvantaged." },
-              "assumption": { "type": "string", "description": "Optional key assumption behind this lens." }
+              "assumption": { "type": "string", "description": "Optional key assumption behind this lens." },
+              "searchKeywords": { "type": "array", "items": { "type": "string" }, "description": "Optional keywords for Google search to get more research on this perspective." }
             },
             "required": ["label", "body"]
           }

@@ -60,7 +60,7 @@ export async function analyze(
   options: AnalyzeOptions = {}
 ): Promise<AnalysisResult> {
   const baseUrl = options.baseUrl ?? DEFAULT_BASE_URL;
-  const url = `${baseUrl.replace(/\/$/, '')}/api/analyze`;
+  const url = `${baseUrl.replace(/\/$/, '')}/api/analyze/`;
 
   const controller = new AbortController();
   const id = setTimeout(() => controller.abort(), TIMEOUT_MS);
@@ -78,7 +78,12 @@ export async function analyze(
     const data = await res.json().catch(() => ({}));
 
     if (!res.ok) {
-      const msg = data?.message || data?.error || `HTTP ${res.status}`;
+      const detail = data?.detail;
+      const msg =
+        (typeof detail === 'string' ? detail : Array.isArray(detail) ? detail.join(' ') : null) ||
+        data?.message ||
+        data?.error ||
+        `HTTP ${res.status}`;
       throw new Error(msg);
     }
 
@@ -95,8 +100,17 @@ export async function analyze(
       ? data.pageSummary.filter((x: unknown) => typeof x === 'string' && String(x).trim().length > 0)
       : undefined;
 
+    const perspectives = (data.perspectives as Array<{ label: string; body: string; searchKeywords?: unknown }>).map(
+      (p) => ({
+        label: p.label,
+        body: p.body,
+        searchKeywords: Array.isArray(p.searchKeywords)
+          ? p.searchKeywords.filter((x: unknown) => typeof x === 'string' && String(x).trim().length > 0)
+          : undefined,
+      })
+    );
     return {
-      perspectives: data.perspectives,
+      perspectives,
       bias,
       reflection: typeof data?.reflection === 'string' ? data.reflection : undefined,
       pageSummary: pageSummary && pageSummary.length >= 3 ? pageSummary.slice(0, 3) : undefined,

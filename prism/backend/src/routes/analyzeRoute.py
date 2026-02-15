@@ -43,8 +43,11 @@
 # =============================================================================
 
 import asyncio
+import logging
 
 from fastapi import APIRouter, HTTPException
+
+log = logging.getLogger(__name__)
 
 from src.utils.textSanitizer import sanitize_text
 from src.utils.truncation import truncate_text
@@ -134,6 +137,7 @@ async def analyze_content(payload: dict):
                 status_code=422, detail=f"LLM output failed validation: {str(e)}"
             )
     except LLMServiceError as e:
+        log.exception("LLM service error (502)")
         raise HTTPException(status_code=502, detail=f"LLM service error: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Unexpected server error: {str(e)}")

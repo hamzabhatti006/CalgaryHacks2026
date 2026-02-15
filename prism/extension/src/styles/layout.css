@@ -578,3 +578,39 @@ body {
   padding: var(--prism-space-xs) var(--prism-space-sm);
   font-size: var(--prism-text-xs);
 }
+
+/* Words to search (research keywords) - below Detected Biases in expanded view */
+.prism-search-keywords-section {
+  margin-top: var(--prism-space-md);
+}
+
+.prism-search-keywords-section .prism-search-keywords-heading {
+  font-size: var(--prism-text-sm);
+  font-weight: 600;
+  color: var(--prism-text);
+  margin: 0 0 var(--prism-space-sm) 0;
+}
+
+.prism-search-keywords-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--prism-space-sm);
+}
+
+.prism-search-keyword-chip {
+  display: inline-block;
+  background: var(--prism-bg-card);
+  border: 1px solid var(--prism-border);
+  border-radius: 8px;
+  padding: var(--prism-space-xs) var(--prism-space-sm);
+  font-size: var(--prism-text-xs);
+  color: var(--prism-accent);
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.prism-search-keyword-chip:hover {
+  background: var(--prism-bg-elevated);
+  border-color: var(--prism-accent);
+  color: var(--prism-accent-hover);
+}
