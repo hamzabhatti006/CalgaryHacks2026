@@ -41,9 +41,10 @@
 export interface Perspective {
   label: string;
   body: string;
-  /** Optional keywords for Google search to get more on this perspective */
   searchKeywords?: string[];
+  keywordsLoading?: boolean;
 }
+
 
 /** Bias shape from backend: indicators array only (e.g. "Emotional framing", "Loaded language") */
 export interface BiasResult {

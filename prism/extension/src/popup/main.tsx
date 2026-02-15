@@ -14,7 +14,7 @@ import {
   setError,
   initFromStorage,
 } from '../state/analysisStore';
-import { analyze } from '../api/analyzeClient';
+import { analyze, generateKeywords } from '../api/analyzeClient';
 
 function PopupApp() {
   const [state, setState] = React.useState(getState);
@@ -29,6 +29,50 @@ function PopupApp() {
       setSelectedPerspective(null);
     }
   }, [state.result?.perspectives?.length, selectedPerspective]);
+
+  // ---------------------------------------------------------------------------
+  // Lazy keyword generation when a perspective is opened
+  // ---------------------------------------------------------------------------
+  React.useEffect(() => {
+    if (!state.result || selectedPerspective === null) return;
+
+    const p = state.result.perspectives[selectedPerspective];
+    if (!p) return;
+
+    // Already generated or currently loading
+    if ((p.searchKeywords && p.searchKeywords.length > 0) || p.keywordsLoading) return;
+
+    const currentResult = state.result;
+    const meta = state.requestMeta ?? undefined;
+
+    // Mark loading
+    const withLoading = currentResult.perspectives.map((persp, idx) =>
+      idx === selectedPerspective ? { ...persp, keywordsLoading: true } : persp
+    );
+
+    setSuccess({ ...currentResult, perspectives: withLoading }, meta);
+
+    // Fire request
+    generateKeywords(p.label, p.body, meta?.title ?? '')
+      .then((keywords) => {
+        const updated = (getState().result?.perspectives ?? withLoading).map((persp, idx) =>
+          idx === selectedPerspective
+            ? { ...persp, searchKeywords: keywords, keywordsLoading: false }
+            : persp
+        );
+
+        const latest = getState().result ?? currentResult;
+        setSuccess({ ...latest, perspectives: updated }, meta);
+      })
+      .catch(() => {
+        const updated = (getState().result?.perspectives ?? withLoading).map((persp, idx) =>
+          idx === selectedPerspective ? { ...persp, keywordsLoading: false } : persp
+        );
+
+        const latest = getState().result ?? currentResult;
+        setSuccess({ ...latest, perspectives: updated }, meta);
+      });
+  }, [selectedPerspective]);
 
   const handleAnalyze = async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -46,28 +90,28 @@ function PopupApp() {
     setLoading();
     try {
       const res = await new Promise<{
-      ok: boolean;
-      data?: { url: string; title: string; text: string };
-      error?: string;
-    }>((resolve) => {
-      chrome.tabs.sendMessage(tab.id!, { type: 'EXTRACT' }, (r) => {
-        const lastErr = chrome.runtime.lastError?.message;
+        ok: boolean;
+        data?: { url: string; title: string; text: string };
+        error?: string;
+      }>((resolve) => {
+        chrome.tabs.sendMessage(tab.id!, { type: 'EXTRACT' }, (r) => {
+          const lastErr = chrome.runtime.lastError?.message;
 
-        if (lastErr) {
-          if (lastErr.includes('Receiving end does not exist')) {
-            resolve({
-              ok: false,
-              error: 'Can’t analyze this page. Open a normal website (not New Tab / chrome://).',
-            });
-          } else {
-            resolve({ ok: false, error: lastErr });
+          if (lastErr) {
+            if (lastErr.includes('Receiving end does not exist')) {
+              resolve({
+                ok: false,
+                error: 'Can’t analyze this page. Open a normal website (not New Tab / chrome://).',
+              });
+            } else {
+              resolve({ ok: false, error: lastErr });
+            }
+            return;
           }
-          return;
-        }
 
-        resolve(r ?? { ok: false, error: 'No response from content script' });
+          resolve(r ?? { ok: false, error: 'No response from content script' });
+        });
       });
-    });
 
       if (!res.ok || !res.data) {
         setError(res.error ?? 'Extraction failed');
@@ -117,6 +161,7 @@ function PopupApp() {
     const { perspectives, bias, reflection, pageSummary } = state.result;
     const title = state.requestMeta?.title ?? 'Page';
 
+    // ---------------- Expanded view ----------------
     if (selectedPerspective !== null) {
       const p = perspectives[selectedPerspective];
       if (p) {
@@ -125,9 +170,11 @@ function PopupApp() {
             <Header />
             <h2 className="prism-heading">{title}</h2>
             <p className="prism-perspective-expanded-label">{p.label}</p>
+
             <section className="prism-section">
               <div className="prism-page-content prism-expanded-content">
                 <p className="prism-perspective-body-expanded">{p.body}</p>
+
                 {Array.isArray(pageSummary) && pageSummary.length >= 3 && (
                   <ul className="prism-list prism-page-content__list prism-summary-in-expanded">
                     {pageSummary.map((s, i) => (
@@ -137,6 +184,7 @@ function PopupApp() {
                 )}
               </div>
             </section>
+
             {Array.isArray(bias?.indicators) && bias.indicators.length > 0 && (
               <section className="prism-section prism-bias-section">
                 <h3 className="prism-bias-heading">Detected Biases</h3>
@@ -147,28 +195,39 @@ function PopupApp() {
                 </div>
               </section>
             )}
+
+            {/* ✅ Keywords section: keep old styling, add loading + async results */}
             <section className="prism-section prism-search-keywords-section" aria-labelledby="prism-search-keywords-heading">
               <h3 id="prism-search-keywords-heading" className="prism-search-keywords-heading">
                 Words to search to learn about this perspective
               </h3>
-              <div className="prism-search-keywords-chips" role="list">
-                {(Array.isArray(p.searchKeywords) && p.searchKeywords.length > 0
-                  ? p.searchKeywords
-                  : [p.label, title].filter(Boolean)
-                ).map((phrase, i) => (
-                  <a
-                    key={i}
-                    className="prism-search-keyword-chip"
-                    href={`https://www.google.com/search?q=${encodeURIComponent(phrase)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    role="listitem"
-                  >
-                    {phrase}
-                  </a>
-                ))}
-              </div>
+
+              {p.keywordsLoading && (
+                <p className="prism-text-muted">Generating search phrases…</p>
+              )}
+
+              {!p.keywordsLoading && Array.isArray(p.searchKeywords) && p.searchKeywords.length > 0 && (
+                <div className="prism-search-keywords-chips" role="list">
+                  {p.searchKeywords.map((phrase, i) => (
+                    <a
+                      key={i}
+                      className="prism-search-keyword-chip"
+                      href={`https://www.google.com/search?q=${encodeURIComponent(phrase)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      role="listitem"
+                    >
+                      {phrase}
+                    </a>
+                  ))}
+                </div>
+              )}
+
+              {!p.keywordsLoading && (!p.searchKeywords || p.searchKeywords.length === 0) && (
+                <p className="prism-text-muted">Search phrases will appear here.</p>
+              )}
             </section>
+
             {reflection && (
               <section className="prism-section prism-reflection-expanded">
                 <div className="prism-reflection-header">
@@ -178,6 +237,7 @@ function PopupApp() {
                 <p className="prism-reflection__prompt">{reflection}</p>
               </section>
             )}
+
             <button className="prism-btn prism-btn-go-back" onClick={() => setSelectedPerspective(null)}>
               Go Back
             </button>
@@ -186,6 +246,7 @@ function PopupApp() {
       }
     }
 
+    // ---------------- List view ----------------
     const summaryText = Array.isArray(pageSummary) && pageSummary.length >= 3
       ? pageSummary.join(' ')
       : 'Click Analyze to see perspectives on this page.';
@@ -195,6 +256,7 @@ function PopupApp() {
         <Header />
         <h2 className="prism-heading">{title}</h2>
         <p className="prism-summary-preview prism-text-muted">{summaryText}</p>
+
         <section className="prism-section">
           <h3 className="prism-perspectives-heading">Perspectives</h3>
           <div className="prism-perspectives-divider" />
@@ -212,6 +274,7 @@ function PopupApp() {
             ))}
           </div>
         </section>
+
         <p className="prism-footer-hint prism-text-muted">
           <span className="prism-footer-icon" aria-hidden>ℹ</span>
           Select a perspective for more insights
