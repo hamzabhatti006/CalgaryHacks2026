@@ -3,27 +3,26 @@
  * Clicking it expands to show the extension UI in a side panel.
  */
 
-const TAB_WIDTH = 40;
-const TAB_HEIGHT = 120;
+const TAB_WIDTH = 60;
+const TAB_HEIGHT = 60;
 const PANEL_WIDTH = 420;
 
 function createSidebar(): void {
-  if (document.getElementById('prism-floating-root')) return;
+  if (document.getElementById("prism-floating-root")) return;
 
-  const root = document.createElement('div');
-  root.id = 'prism-floating-root';
+  const root = document.createElement("div");
+  root.id = "prism-floating-root";
   root.style.cssText = `
     position: fixed;
     right: 0;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 100px;
     z-index: 2147483646;
     font-family: system-ui, sans-serif;
   `;
 
-  const tab = document.createElement('div');
-  tab.id = 'prism-floating-tab';
-  tab.setAttribute('aria-label', 'Open Prism');
+  const tab = document.createElement("div");
+  tab.id = "prism-floating-tab";
+  tab.setAttribute("aria-label", "Open Prism");
   tab.style.cssText = `
     width: ${TAB_WIDTH}px;
     height: ${TAB_HEIGHT}px;
@@ -39,11 +38,11 @@ function createSidebar(): void {
     transition: box-shadow 0.2s;
   `;
 
-  const logoUrl = chrome.runtime.getURL('icons/logo.png');
-  const logoImg = document.createElement('img');
+  const logoUrl = chrome.runtime.getURL("icons/logo.png");
+  const logoImg = document.createElement("img");
   logoImg.src = logoUrl;
-  logoImg.alt = 'Prism';
-  logoImg.setAttribute('aria-hidden', 'true');
+  logoImg.alt = "Prism";
+  logoImg.setAttribute("aria-hidden", "true");
   logoImg.style.cssText = `
     width: 28px;
     height: 28px;
@@ -52,35 +51,35 @@ function createSidebar(): void {
 
   tab.appendChild(logoImg);
 
-  const panel = document.createElement('div');
-  panel.id = 'prism-floating-panel';
+  const panel = document.createElement("div");
+  panel.id = "prism-floating-panel";
   panel.style.cssText = `
     position: absolute;
     right: ${TAB_WIDTH}px;
-    top: 50%;
-    transform: translateY(-50%);
+    top: 10px;
+    right: 10px;
     width: ${PANEL_WIDTH}px;
     height: 90vh;
     max-height: 600px;
     background: #121212;
     border: 1px solid #404040;
-    border-radius: 12px 0 0 12px;
+    border-radius: 12px;
     box-shadow: -8px 0 24px rgba(0,0,0,0.3);
     overflow: hidden;
     display: none;
   `;
 
-  const iframe = document.createElement('iframe');
-  iframe.src = chrome.runtime.getURL('popup.html');
+  const iframe = document.createElement("iframe");
+  iframe.src = chrome.runtime.getURL("popup.html");
   iframe.style.cssText = `
     width: 100%;
     height: 100%;
     border: none;
   `;
 
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '×';
-  closeBtn.setAttribute('aria-label', 'Close');
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "×";
+  closeBtn.setAttribute("aria-label", "Close");
   closeBtn.style.cssText = `
     position: absolute;
     top: 8px;
@@ -104,33 +103,33 @@ function createSidebar(): void {
 
   function openPanel(): void {
     isOpen = true;
-    panel.style.display = 'block';
-    tab.style.display = 'none';
-    tab.style.borderRadius = '0';
+    panel.style.display = "block";
+    tab.style.display = "none";
+    tab.style.borderRadius = "0";
   }
 
   function closePanel(): void {
     isOpen = false;
-    panel.style.display = 'none';
-    tab.style.display = 'flex';
-    tab.style.borderRadius = '12px 0 0 12px';
+    panel.style.display = "none";
+    tab.style.display = "flex";
+    tab.style.borderRadius = "12px 0 0 12px";
   }
 
-  tab.addEventListener('mouseenter', () => {
-    if (!isOpen) tab.style.boxShadow = '-6px 0 16px rgba(0,0,0,0.3)';
+  tab.addEventListener("mouseenter", () => {
+    if (!isOpen) tab.style.boxShadow = "-6px 0 16px rgba(0,0,0,0.3)";
   });
-  tab.addEventListener('mouseleave', () => {
-    if (!isOpen) tab.style.boxShadow = '-4px 0 12px rgba(0,0,0,0.2)';
+  tab.addEventListener("mouseleave", () => {
+    if (!isOpen) tab.style.boxShadow = "-4px 0 12px rgba(0,0,0,0.2)";
   });
 
-  tab.addEventListener('click', () => {
+  tab.addEventListener("click", () => {
     if (isOpen) closePanel();
     else openPanel();
   });
 
-  closeBtn.addEventListener('click', closePanel);
+  closeBtn.addEventListener("click", closePanel);
 
-  window.addEventListener('prism-open-sidebar', () => {
+  window.addEventListener("prism-open-sidebar", () => {
     if (!isOpen) openPanel();
   });
 
@@ -139,8 +138,8 @@ function createSidebar(): void {
   document.body.appendChild(root);
 }
 
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', createSidebar);
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", createSidebar);
 } else {
   createSidebar();
 }
